@@ -26,7 +26,7 @@ namespace gfx {
 Viewer::Viewer(const Arguments& arguments)
     : Platform::Application{arguments,
                             Configuration{}.setTitle("Viewer").setWindowFlags(
-                                Configuration::WindowFlag::Resizable),
+                                Configuration::WindowFlag::Resizable).setSize(Vector2i{960,540}),
                             GLConfiguration{}.setColorBufferSize(
                                 Vector4i(8, 8, 8, 8))},
       pathfinder_(nav::PathFinder::create()),
@@ -229,6 +229,17 @@ void Viewer::mouseMoveEvent(MouseMoveEvent& event) {
   redraw();
 }
 
+std::string agentToPoseString(const scene::SceneNode& agentBodyNode, const scene::SceneNode& cameraNode) {
+  const auto q = agentBodyNode.getRotation();
+  const auto p = cameraNode.getAbsolutePosition();
+  const std::string prefix = "{\"T_cw\":{\"QuaternionXYZW\":[";
+  const std::string midfix = "],\"Translation\":[";
+  const std::string postfix = "]},\"vars\":null}";
+  auto vec2str = [&] (const vec3f& v) { return std::to_string(v.x()) + "," + std::to_string(v.y()) + "," + std::to_string(v.z()); };
+  const std::string poseString = prefix + vec2str(q.coeffs().head<3>()) + "," + std::to_string(q.w()) + midfix + vec2str(p) + postfix;
+  return poseString;
+}
+
 void Viewer::keyPressEvent(KeyEvent& event) {
   const auto key = event.key();
   switch (key) {
@@ -268,6 +279,9 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       break;
     case KeyEvent::Key::Z:
       controls_(*cameraNode_, "moveUp", moveSensitivity, false);
+      break;
+    case KeyEvent::Key::P:
+      std::cout << agentToPoseString(*agentBodyNode_, *cameraNode_) << ",";
       break;
     default:
       break;
