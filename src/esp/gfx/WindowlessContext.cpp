@@ -14,6 +14,14 @@
 #include <Magnum/Platform/GLContext.h>
 
 #ifdef ESP_BUILD_EGL_SUPPORT
+
+// Fix older linux distros by defining EGL_CAST if not already defined.
+#include <EGL/eglplatform.h>
+#ifndef EGL_CAST
+#define EGL_CAST(type, value) (static_cast<type>(value))
+#endif
+#endif
+
 #include <glad/glad_egl.h>
 #else
 #include <Magnum/Platform/WindowlessGlxApplication.h>
