@@ -896,7 +896,7 @@ vec3f esp::nav::PathFinder::tryStep(const vec3f& start, const vec3f& end) {
   std::tie(std::ignore, startRef, std::ignore) =
       projectToPoly(start, navQuery_, filter_);
   std::tie(std::ignore, endRef, std::ignore) =
-      projectToPoly(end, navQuery_, filter_);
+      projectToPoly(endPoint, navQuery_, filter_);
   if (!this->islandSystem_->hasConnection(startRef, endRef)) {
     // There isn't a connection!  This happens when endPoint is on an edge
     // shared between two different connected components (aka infinitely thin
