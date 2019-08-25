@@ -832,10 +832,11 @@ bool esp::nav::PathFinder::findPath(MultiGoalShortestPath& path) {
 namespace esp {
 namespace nav {
 namespace {
-std::tuple<dtPolyRef, vec3f> applyMoveFilter(const vec3f& start,
-                                             const vec3f& end,
-                                             const dtNavMeshQuery* navQuery,
-                                             const dtQueryFilter* filter) {
+std::tuple<dtPolyRef, vec3f> applyMoveAlongSurface(
+    const vec3f& start,
+    const vec3f& end,
+    const dtNavMeshQuery* navQuery,
+    const dtQueryFilter* filter) {
   const int MAX_POLYS = 256;
   int numPolys;
   dtPolyRef polys[MAX_POLYS];
@@ -872,12 +873,12 @@ vec3f esp::nav::PathFinder::tryStep(const vec3f& start, const vec3f& end) {
   const int numSteps = std::round((end - start).norm() / stepSize);
   const float realStepSize = (end - start).norm() / numSteps;
 
-  dtPolyRef endPolyRef;
+  dtPolyRef trueEndPolyRef;
   vec3f currentPos{start};
   for (int i = 0; i < numSteps; ++i) {
     vec3f prevPos = currentPos;
 
-    std::tie(endPolyRef, currentPos) = applyMoveFilter(
+    std::tie(trueEndPolyRef, currentPos) = applyMoveAlongSurface(
         currentPos, currentPos + stepDir * realStepSize, navQuery_, filter_);
 
     if (didCollide(prevPos, prevPos + stepDir * realStepSize, currentPos)) {
@@ -891,10 +892,12 @@ vec3f esp::nav::PathFinder::tryStep(const vec3f& start, const vec3f& end) {
   // First check to see if the endPoint as returned by `moveAlongSurface`
   // is in the same connected component as the startRef according to
   // findNearestPoly
-  dtPolyRef startRef;
+  dtPolyRef startRef, endRef;
   std::tie(std::ignore, startRef, std::ignore) =
       projectToPoly(start, navQuery_, filter_);
-  if (!this->islandSystem_->hasConnection(startRef, endPolyRef)) {
+  std::tie(std::ignore, endRef, std::ignore) =
+      projectToPoly(end, navQuery_, filter_);
+  if (!this->islandSystem_->hasConnection(startRef, endRef)) {
     // There isn't a connection!  This happens when endPoint is on an edge
     // shared between two different connected components (aka infinitely thin
     // walls) The way to deal with this is to nudge the point into the polygon
@@ -902,7 +905,7 @@ vec3f esp::nav::PathFinder::tryStep(const vec3f& start, const vec3f& end) {
     // endPoint to be in through the polys list
     const dtMeshTile* tile = 0;
     const dtPoly* poly = 0;
-    navMesh_->getTileAndPolyByRefUnsafe(endPolyRef, &tile, &poly);
+    navMesh_->getTileAndPolyByRefUnsafe(trueEndPolyRef, &tile, &poly);
 
     // Calculate the center of the polygon we want the points to be in
     vec3f polyCenter = vec3f::Zero();
