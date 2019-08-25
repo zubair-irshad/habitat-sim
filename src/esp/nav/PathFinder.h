@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <Magnum/Magnum.h>
 #include <string>
 #include <vector>
 
@@ -127,8 +128,9 @@ class PathFinder : public std::enable_shared_from_this<PathFinder> {
   bool findPath(ShortestPath& path);
   bool findPath(MultiGoalShortestPath& path);
 
-  template <typename T>
-  T tryStep(const T& start, const T& end);
+  vec3f tryStep(const vec3f& start, const vec3f& end);
+  Magnum::Vector3 tryStep(const Magnum::Vector3& start,
+                          const Magnum::Vector3& end);
 
   bool loadNavMesh(const std::string& path);
 

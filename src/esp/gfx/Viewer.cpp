@@ -21,7 +21,7 @@ using namespace Magnum;
 using namespace Math::Literals;
 using namespace Corrade;
 
-constexpr float moveSensitivity = 0.1f;
+constexpr float moveSensitivity = 0.25f;
 constexpr float lookSensitivity = 11.25f;
 constexpr float cameraHeight = 1.5f;
 
@@ -109,18 +109,17 @@ Viewer::Viewer(const Arguments& arguments)
   }
 
   // connect controls to navmesh if loaded
-  /*
+
   if (pathfinder_->isLoaded()) {
-      controls_.setMoveFilterFunction([&](const vec3f& start, const vec3f& end)
-  { vec3f currentPosition = pathfinder_->tryStep(start, end); LOG(INFO) <<
-  "position=" << currentPosition.transpose() << " rotation="
-                  << quatf(agentBodyNode_->rotation()).coeffs().transpose();
-        LOG(INFO) << "Distance to closest obstacle: "
-                  << pathfinder_->distanceToClosestObstacle(currentPosition);
-        return currentPosition;
-      });
-    }
-    */
+    controls_.setMoveFilterFunction([&](const vec3f& start, const vec3f& end) {
+      vec3f currentPosition = pathfinder_->tryStep(start, end);
+      LOG(INFO) << "position=" << currentPosition.transpose() << " rotation="
+                << quatf(agentBodyNode_->rotation()).coeffs().transpose();
+      LOG(INFO) << "Distance to closest obstacle: "
+                << pathfinder_->distanceToClosestObstacle(currentPosition);
+      return currentPosition;
+    });
+  }
 
   renderCamera_->node().setTransformation(
       cameraNode_->absoluteTransformation());
