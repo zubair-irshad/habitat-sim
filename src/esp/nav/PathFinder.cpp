@@ -98,7 +98,7 @@ class IslandSystem {
     }
   }
 
-  inline bool hasConnection(dtPolyRef startRef, dtPolyRef endRef) const {
+  bool hasConnection(dtPolyRef startRef, dtPolyRef endRef) const {
     // If both polygons are on the same island, there must be a path between
     // them
     auto itStart = polyToIsland_.find(startRef);
@@ -112,7 +112,7 @@ class IslandSystem {
     return itStart->second == itEnd->second;
   }
 
-  inline float islandRadius(dtPolyRef ref) const {
+  float islandRadius(dtPolyRef ref) const {
     auto itRef = polyToIsland_.find(ref);
     if (itRef == polyToIsland_.end())
       return 0.0;
