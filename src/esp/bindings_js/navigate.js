@@ -64,11 +64,11 @@ class NavigateTask {
 
   renderImage() {
     const obs = this.sim.getObservation("rgb", null);
-    this.imageData.data.set(obs.getData());
+    //this.imageData.data.set(obs.getData());
     // convert from linear to sRGB gamma
-    this.applyGamma(this.imageData.data, 2.2);
-    this.imageCtx.putImageData(this.imageData, 0, 0);
-    this.renderRadar();
+    //this.applyGamma(this.imageData.data, 2.2);
+    //this.imageCtx.putImageData(this.imageData, 0, 0);
+    //this.renderRadar();
   }
 
   renderSemanticImage() {
@@ -134,8 +134,8 @@ class NavigateTask {
 
   render() {
     this.renderImage();
-    if (this.semanticObjects.size() > 0)
-      this.renderSemanticImage();
+//     if (this.semanticObjects.size() > 0)
+//       this.renderSemanticImage();
     this.renderRadar();
   }
 

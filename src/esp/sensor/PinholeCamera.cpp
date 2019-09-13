@@ -10,6 +10,9 @@
 #include "esp/gfx/Renderer.h"
 #include "esp/gfx/Simulator.h"
 
+#include <Magnum/GL/DefaultFramebuffer.h>
+#include <Magnum/GL/Renderer.h>
+
 namespace esp {
 namespace sensor {
 
@@ -50,10 +53,18 @@ bool PinholeCamera::getObservation(gfx::Simulator& sim, Observation& obs) {
   // TODO: check if sensor is valid?
   // TODO: have different classes for the different types of sensors
   //
+  Magnum::GL::Renderer::enable(Magnum::GL::Renderer::Feature::DepthTest);
+  Magnum::GL::Renderer::enable(Magnum::GL::Renderer::Feature::FaceCulling);
+  Magnum::GL::defaultFramebuffer.clearDepth(1.0);
+  Magnum::GL::defaultFramebuffer.clearColor(Magnum::Color4{0, 0, 0, 1});
+
+#if 0
   if (!hasRenderTarget())
     return false;
+#endif
 
-  renderTarget().renderEnter();
+  if (hasRenderTarget())
+    renderTarget().renderEnter();
 
   // Make sure we have memory
   if (buffer_ == nullptr) {
@@ -73,6 +84,7 @@ bool PinholeCamera::getObservation(gfx::Simulator& sim, Observation& obs) {
     renderer->draw(*this, sim.getActiveSceneGraph());
   }
 
+  if (hasRenderTarget()) {
   // TODO: have different classes for the different types of sensors
   // TODO: do we need to flip axis?
   if (spec_->sensorType == SensorType::SEMANTIC) {
@@ -88,8 +100,10 @@ bool PinholeCamera::getObservation(gfx::Simulator& sim, Observation& obs) {
         Magnum::PixelFormat::RGBA8Unorm, renderTarget().framebufferSize(),
         obs.buffer->data});
   }
+  }
 
-  renderTarget().renderExit();
+  if (hasRenderTarget())
+    renderTarget().renderExit();
 
   return true;
 }

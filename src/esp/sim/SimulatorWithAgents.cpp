@@ -6,6 +6,13 @@
 #include "esp/gfx/Renderer.h"
 #include "esp/io/io.h"
 
+#include <Magnum/GL/DefaultFramebuffer.h>
+#include <Magnum/GL/Renderer.h>
+
+#include <Magnum/Math/Color.h>
+
+using namespace Magnum::Math::Literals;
+
 namespace esp {
 namespace sim {
 
@@ -90,9 +97,14 @@ agent::Agent::ptr SimulatorWithAgents::addAgent(
   agent::Agent::ptr ag = agent::Agent::create(agentNode, agentConfig);
 
   // Add a RenderTarget to each of the agent's sensors
+#if 0
   for (auto& it : ag->getSensorSuite().getSensors()) {
     renderer_->bindRenderTarget(it.second);
   }
+#else
+  Magnum::GL::Renderer::enable(Magnum::GL::Renderer::Feature::DepthTest);
+  Magnum::GL::Renderer::enable(Magnum::GL::Renderer::Feature::FaceCulling);
+#endif
 
   agents_.push_back(ag);
   // TODO: just do this once
