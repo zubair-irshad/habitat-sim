@@ -7,11 +7,12 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/ArrayViewStl.h>
-#include <Magnum/GL/Texture.h>
-#include <Magnum/GL/TextureFormat.h>
 #include <Magnum/Image.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Math/Functions.h>
+#include <Magnum/MeshTools/CombineIndexedArrays.h>
+#include <Magnum/MeshTools/Interleave.h>
+#include <Magnum/MeshTools/RemoveDuplicates.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/Trade.h>
 
@@ -27,8 +28,12 @@
 
 #include "esp/core/esp.h"
 #include "esp/geo/geo.h"
+#include "esp/gfx/PrimitiveIDShader.h"
 #include "esp/io/io.h"
 #include "esp/io/json.h"
+
+namespace Cr = Corrade;
+namespace Mn = Magnum;
 
 namespace esp {
 namespace assets {
@@ -40,36 +45,36 @@ void copyTo(std::shared_ptr<tinyply::PlyData> data, std::vector<T>& dst) {
   CHECK_EQ(data->buffer.size_bytes(), sizeof(T) * dst.size());
   std::memcpy(dst.data(), data->buffer.get(), data->buffer.size_bytes());
 }
-}  // namespace
 
-/*
- * In modern OpenGL fragment sharder, we can access the ID of the current
- * primitive and thus can index an array.  We can make a 2D texture behave
- * like a 2D array with nearest sampling and edge clamping.
- */
-Magnum::GL::Texture2D createInstanceTexture(float* data, const int texSize) {
-  /*
-   * Create the image that wil be uploaded to the texture.  We
-   * can index the original data array
-   * with image[primId / texSize, primId % texSize]
-   * NB: The indices will have to mapped into [0, 1] in the GLSL code
-   */
-  Magnum::Image2D image(
-      Magnum::PixelFormat::R32F, {texSize, texSize},
-      Corrade::Containers::Array<char>(reinterpret_cast<char*>(data),
-                                       texSize * texSize * sizeof(data[0])));
-
-  Magnum::GL::Texture2D tex;
-
-  tex.setMinificationFilter(Magnum::SamplerFilter::Nearest)
-      .setMagnificationFilter(Magnum::SamplerFilter::Nearest)
-      .setWrapping({Magnum::SamplerWrapping::ClampToEdge,
-                    Magnum::SamplerWrapping::ClampToEdge})
-      .setStorage(1, Magnum::GL::TextureFormat::R32F, image.size())
-      .setSubImage(0, {}, image);
-
-  return tex;
+template <typename T>
+void copyVec3To(std::shared_ptr<tinyply::PlyData> data, std::vector<T>& dst) {
+  dst.resize(data->count * 3);
+  CHECK_EQ(data->buffer.size_bytes(), sizeof(T) * dst.size());
+  std::memcpy(dst.data(), data->buffer.get(), data->buffer.size_bytes());
 }
+
+// TODO(msb) move this specialization to Magnum/MeshTools/CombineIndexedArrays.h
+template <class T,
+          typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+std::vector<Mn::UnsignedInt> removeDuplicates(std::vector<T>& data) {
+  std::vector<Mn::UnsignedInt> resultIndices;
+  resultIndices.reserve(data.size());
+
+  std::unordered_map<T, Mn::UnsignedInt> table;
+  size_t cursor = 0;
+  for (size_t i = 0; i < data.size(); ++i) {
+    auto val = data[i];
+    auto result = table.emplace(val, cursor);
+    if (result.second) {
+      data[cursor++] = val;
+    }
+    resultIndices.push_back(result.first->second);
+  }
+  data.resize(cursor);
+
+  return resultIndices;
+}
+}  // namespace
 
 bool GenericInstanceMeshData::loadPLY(const std::string& plyFile) {
   cpu_vbo_.clear();
@@ -147,15 +152,17 @@ bool GenericInstanceMeshData::loadPLY(const std::string& plyFile) {
     vertexPerFace =
         face_inds->buffer.size_bytes() / (face_inds->count * sizeof(uint32_t));
     if (vertexPerFace == 3) {
-      copyTo(face_inds, cpu_ibo_);
+      copyVec3To(face_inds, cpu_ibo_);
     } else {
       std::vector<vec4ui> tmp;
       copyTo(face_inds, tmp);
-      cpu_ibo_.reserve(tmp.size() * 2);
+      cpu_ibo_.reserve(tmp.size() * 2 * 3);
       // create ibo converting quads to tris [0, 1, 2, 3] -> [0, 1, 2],[0, 2, 3]
       for (auto& quad : tmp) {
-        cpu_ibo_.emplace_back(quad[0], quad[1], quad[2]);
-        cpu_ibo_.emplace_back(quad[0], quad[2], quad[3]);
+        constexpr int indices[] = {0, 1, 2, 0, 2, 3};
+        for (int i : indices) {
+          cpu_ibo_.push_back(quad[i]);
+        }
       }
     }
   } else {
@@ -168,24 +175,24 @@ bool GenericInstanceMeshData::loadPLY(const std::string& plyFile) {
 
   // If the input mesh is a quad mesh, then we had to double the number of
   // primitives, so we also need to double the size of the object IDs buffer
-  objectIds_.reserve(object_ids->count * (vertexPerFace == 4 ? 2 : 1));
+  int indicesPerFace = 3 * (vertexPerFace == 4 ? 2 : 1);
+  objectIds_.reserve(object_ids->count * indicesPerFace);
   if (object_ids->t == tinyply::Type::INT32) {
     std::vector<int> tmp;
     copyTo(object_ids, tmp);
 
     for (auto& id : tmp) {
-      objectIds_.emplace_back(id);
-      if (vertexPerFace == 4)
-        objectIds_.emplace_back(id);
+      ASSERT(id <= 65535);
+      for (int i = 0; i < indicesPerFace; ++i)
+        objectIds_.push_back(id);
     }
   } else if (object_ids->t == tinyply::Type::UINT16) {
     std::vector<uint16_t> tmp;
     copyTo(object_ids, tmp);
 
     for (auto& id : tmp) {
-      objectIds_.emplace_back(id);
-      if (vertexPerFace == 4)
-        objectIds_.emplace_back(id);
+      for (int i = 0; i < indicesPerFace; ++i)
+        objectIds_.push_back(id);
     }
   } else {
     LOG(ERROR) << "Cannot load object_id of type "
@@ -224,47 +231,36 @@ void GenericInstanceMeshData::uploadBuffersToGPU(bool forceReload) {
     return;
   }
 
-  renderingBuffer_.reset();
+  // TODO(msb) This processing could all be done off-line allowing us to
+  // simply mmap a file with the vertex buffer and index buffer.
+  std::vector<Mn::UnsignedInt> objectIdIndices = removeDuplicates(objectIds_);
+  Mn::GL::Buffer vertices, indices;
+  indices.setTargetHint(Mn::GL::Buffer::TargetHint::ElementArray);
+  indices.setData(
+      Mn::MeshTools::combineIndexedArrays(
+          std::make_pair(std::cref(objectIdIndices), std::ref(objectIds_)),
+          std::make_pair(std::cref(cpu_ibo_), std::ref(cpu_vbo_)),
+          std::make_pair(std::cref(cpu_ibo_), std::ref(cpu_cbo_))),
+      Mn::GL::BufferUsage::StaticDraw);
+  vertices.setData(
+      Mn::MeshTools::interleave(cpu_vbo_, cpu_cbo_, 1, objectIds_, 2),
+      Mn::GL::BufferUsage::StaticDraw);
+
   renderingBuffer_ =
       std::make_unique<GenericInstanceMeshData::RenderingBuffer>();
-
-  // convert uchar rgb to float rgb
-  std::vector<vec3f> cbo_float_;
-  cbo_float_.reserve(cpu_cbo_.size());
-  for (const auto& c : cpu_cbo_) {
-    cbo_float_.emplace_back(c.cast<float>() / 255.0f);
-  }
-
-  /*
-   * Textures in OpenGL must be square and must have a sizes that are powers of
-   * 2, so first compute the size of the smallest texture that can contain our
-   * array.  Then copy the object id's buffer into the texture data buffer as
-   * floats.
-   */
-  const int nPrims = cpu_ibo_.size();
-  const int texSize = std::pow(2, std::ceil(std::log2(std::sqrt(nPrims))));
-  // The image takes ownership over the obj_id_tex_data array, so there is no
-  // delete
-  float* obj_id_tex_data = new float[texSize * texSize]();
-  for (size_t i = 0; i < nPrims; ++i) {
-    obj_id_tex_data[i] = static_cast<float>(objectIds_[i]);
-  }
-
-  // Takes ownership of the data pointer
-  renderingBuffer_->tex = createInstanceTexture(obj_id_tex_data, texSize);
-
-  renderingBuffer_->vbo.setData(cpu_vbo_, Magnum::GL::BufferUsage::StaticDraw);
-  renderingBuffer_->cbo.setData(cbo_float_,
-                                Magnum::GL::BufferUsage::StaticDraw);
-  renderingBuffer_->ibo.setData(cpu_ibo_, Magnum::GL::BufferUsage::StaticDraw);
   renderingBuffer_->mesh.setPrimitive(Magnum::GL::MeshPrimitive::Triangles)
-      .setCount(nPrims * 3)
-      .addVertexBuffer(renderingBuffer_->vbo, 0,
-                       Magnum::GL::Attribute<0, Magnum::Vector3>{})
-      .addVertexBuffer(renderingBuffer_->cbo, 0,
-                       Magnum::GL::Attribute<1, Magnum::Color3>{})
-      .setIndexBuffer(renderingBuffer_->ibo, 0,
-                      Magnum::GL::MeshIndexType::UnsignedInt);
+      .setCount(cpu_ibo_.size())
+      .addVertexBuffer(
+          std::move(vertices), 0, gfx::PrimitiveIDShader::Position{},
+          gfx::PrimitiveIDShader::Color3{
+              gfx::PrimitiveIDShader::Color3::DataType::UnsignedByte,
+              gfx::PrimitiveIDShader::Color3::DataOption::Normalized},
+          1,
+          gfx::PrimitiveIDShader::ObjectId{
+              gfx::PrimitiveIDShader::ObjectId::DataType::UnsignedShort},
+          2)
+      .setIndexBuffer(std::move(indices), 0,
+                      Mn::GL::MeshIndexType::UnsignedInt);
 
   buffersOnGPU_ = true;
 }

@@ -7,11 +7,13 @@
 #include "Viewer.h"
 
 #include <Corrade/Utility/Arguments.h>
+#include <Magnum/DebugTools/Screenshot.h>
 #include <Magnum/EigenIntegration/GeometryIntegration.h>
 #include <Magnum/GL/DefaultFramebuffer.h>
 #include <Magnum/GL/Renderer.h>
 #include <sophus/so3.hpp>
 #include "Drawable.h"
+#include "esp/core/esp.h"
 #include "esp/io/io.h"
 
 #include "esp/gfx/Simulator.h"
@@ -93,7 +95,6 @@ Viewer::Viewer(const Arguments& arguments)
   float hfov = 90.0f;
   int width = viewportSize[0];
   int height = viewportSize[1];
-  const float aspectRatio = static_cast<float>(width) / height;
   float znear = 0.01f;
   float zfar = 1000.0f;
   renderCamera_->setProjectionMatrix(width, height, znear, zfar, hfov);
@@ -175,7 +176,6 @@ void Viewer::invertGravity() {
   const Magnum::Vector3& gravity = physicsManager_->getGravity();
   const Magnum::Vector3 invGravity = -1 * gravity;
   physicsManager_->setGravity(invGravity);
-  const Magnum::Vector3& newGravity = physicsManager_->getGravity();
 }
 
 void Viewer::pokeLastObject() {
@@ -366,9 +366,13 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       break;
     case KeyEvent::Key::X:
       controls_(*agentBodyNode_, "moveDown", moveSensitivity, false);
+      LOG(INFO) << "Agent position "
+                << Eigen::Map<vec3f>(agentBodyNode_->translation().data());
       break;
     case KeyEvent::Key::Z:
       controls_(*agentBodyNode_, "moveUp", moveSensitivity, false);
+      LOG(INFO) << "Agent position "
+                << Eigen::Map<vec3f>(agentBodyNode_->translation().data());
       break;
     case KeyEvent::Key::O: {
       if (physicsManager_ != nullptr) {
@@ -395,6 +399,10 @@ void Viewer::keyPressEvent(KeyEvent& event) {
     case KeyEvent::Key::T:
       // Test key. Put what you want here...
       torqueLastObject();
+      break;
+    case KeyEvent::Key::I:
+      Magnum::DebugTools::screenshot(GL::defaultFramebuffer,
+                                     "test_image_save.png");
       break;
     default:
       break;

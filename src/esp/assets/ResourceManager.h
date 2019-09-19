@@ -4,6 +4,8 @@
 
 #pragma once
 
+/** @file */
+
 #include <map>
 #include <memory>
 #include <string>
@@ -39,7 +41,7 @@ namespace gfx {
 class Drawable;
 }
 namespace scene {
-class SceneConfiguration;
+struct SceneConfiguration;
 }
 namespace physics {
 class PhysicsManager;
@@ -47,6 +49,9 @@ class RigidObject;
 }  // namespace physics
 namespace assets {
 
+/**
+@brief Loaded asset and resource manager.
+*/
 class ResourceManager {
  public:
   // Singleton
@@ -122,7 +127,7 @@ class ResourceManager {
   PhysicsObjectAttributes& getPhysicsObjectAttributes(
       const std::string& configFile);
 
-  const int getNumLibraryObjects() { return physicsObjectConfigList_.size(); };
+  int getNumLibraryObjects() { return physicsObjectConfigList_.size(); };
 
   const Magnum::Matrix4& getMeshTransformation(const size_t meshIndex) {
     return meshes_[meshIndex]->meshTransform_;
@@ -135,7 +140,6 @@ class ResourceManager {
   //! (2) upload mesh to gpu and drawables
   //! (optional reload of GPU-side assets)
   void addComponent(Importer& importer,
-                    const AssetInfo& info,
                     const MeshMetaData& metaData,
                     scene::SceneNode& parent,
                     DrawableGroup* drawables,
@@ -207,6 +211,7 @@ class ResourceManager {
   // library of physics object parameters mapped from config filename (used by
   // physicsManager to instantiate physical objects) maps:
   // "data/objects/cheezit.phys_properties.json" -> physicalMetaData
+  /** @brief Maps property filenames to physical object templates. */
   std::map<std::string, PhysicsObjectAttributes> physicsObjectLibrary_;
   // library of physics scene attributes for resetting/switching contexts
   std::map<std::string, PhysicsSceneAttributes> physicsSceneLibrary_;

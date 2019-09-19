@@ -19,7 +19,7 @@ class dtQueryPathState;
 namespace esp {
 // forward declaration
 namespace assets {
-class MeshData;
+struct MeshData;
 }
 namespace nav {
 
@@ -152,6 +152,8 @@ class PathFinder : public std::enable_shared_from_this<PathFinder> {
 
   bool isNavigable(const vec3f& pt, const float maxYDelta = 0.5) const;
 
+  std::pair<vec3f, vec3f> bounds() const { return bounds_; }
+
   friend impl::ActionSpaceGraph;
 
  protected:
@@ -163,6 +165,7 @@ class PathFinder : public std::enable_shared_from_this<PathFinder> {
   dtNavMesh* navMesh_;
   dtNavMeshQuery* navQuery_;
   dtQueryFilter* filter_;
+  std::pair<vec3f, vec3f> bounds_;
   ESP_SMART_POINTERS(PathFinder)
 };
 

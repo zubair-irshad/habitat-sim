@@ -6,6 +6,7 @@
 
 namespace em = emscripten;
 
+#include "esp/scene/SemanticScene.h"
 #include "esp/sim/SimulatorWithAgents.h"
 
 using namespace esp;
@@ -23,8 +24,8 @@ using namespace esp::sim;
 em::val Observation_getData(Observation& obs) {
   auto buffer = obs.buffer;
   if (buffer != nullptr) {
-    return em::val(em::typed_memory_view(buffer->totalBytes,
-                                         static_cast<uint8_t*>(buffer->data)));
+    return em::val(
+        em::typed_memory_view(buffer->data.size(), buffer->data.data()));
   } else {
     return em::val::undefined();
   }
@@ -50,6 +51,7 @@ EMSCRIPTEN_BINDINGS(habitat_sim_bindings_js) {
   em::register_vector<SensorSpec::ptr>("VectorSensorSpec");
   em::register_vector<size_t>("VectorSizeT");
   em::register_vector<std::string>("VectorString");
+  em::register_vector<std::shared_ptr<SemanticObject>>("VectorSemanticObjects");
 
   em::register_map<std::string, float>("MapStringFloat");
   em::register_map<std::string, std::string>("MapStringString");
@@ -88,6 +90,10 @@ EMSCRIPTEN_BINDINGS(habitat_sim_bindings_js) {
       .element(em::index<2>())
       .element(em::index<3>());
 
+  em::value_object<std::pair<vec3f, vec3f>>("aabb")
+      .field("min", &std::pair<vec3f, vec3f>::first)
+      .field("max", &std::pair<vec3f, vec3f>::second);
+
   em::class_<AgentConfiguration>("AgentConfiguration")
       .smart_ptr_constructor("AgentConfiguration",
                              &AgentConfiguration::create<>)
@@ -110,9 +116,26 @@ EMSCRIPTEN_BINDINGS(habitat_sim_bindings_js) {
       .property("name", &ActionSpec::name)
       .property("actuation", &ActionSpec::actuation);
 
+  em::class_<PathFinder>("PathFinder")
+      .smart_ptr<PathFinder::ptr>("PathFinder::ptr")
+      .property("bounds", &PathFinder::bounds)
+      .function("isNavigable", &PathFinder::isNavigable);
+
   em::class_<SensorSuite>("SensorSuite")
       .smart_ptr_constructor("SensorSuite", &SensorSuite::create<>)
       .function("get", &SensorSuite::get);
+
+  em::enum_<SensorType>("SensorType")
+      .value("NONE", SensorType::NONE)
+      .value("COLOR", SensorType::COLOR)
+      .value("DEPTH", SensorType::DEPTH)
+      .value("NORMAL", SensorType::NORMAL)
+      .value("SEMANTIC", SensorType::SEMANTIC)
+      .value("PATH", SensorType::PATH)
+      .value("GOAL", SensorType::GOAL)
+      .value("FORCE", SensorType::FORCE)
+      .value("TENSOR", SensorType::TENSOR)
+      .value("TEXT", SensorType::TEXT);
 
   em::class_<SensorSpec>("SensorSpec")
       .smart_ptr_constructor("SensorSpec", &SensorSpec::create<>)
@@ -144,8 +167,6 @@ EMSCRIPTEN_BINDINGS(habitat_sim_bindings_js) {
       .property("defaultAgentId", &SimulatorConfiguration::defaultAgentId)
       .property("defaultCameraUuid", &SimulatorConfiguration::defaultCameraUuid)
       .property("gpuDeviceId", &SimulatorConfiguration::gpuDeviceId)
-      .property("width", &SimulatorConfiguration::width)
-      .property("height", &SimulatorConfiguration::height)
       .property("compressTextures", &SimulatorConfiguration::compressTextures);
 
   em::class_<AgentState>("AgentState")
@@ -178,7 +199,23 @@ EMSCRIPTEN_BINDINGS(habitat_sim_bindings_js) {
       .property("dataType", &ObservationSpace::dataType)
       .property("shape", &ObservationSpace::shape);
 
-  em::class_<SimulatorWithAgents>("Simulator")
+  em::class_<SemanticCategory>("SemanticCategory")
+      .smart_ptr<SemanticCategory::ptr>("SemanticCategory::ptr")
+      .function("getIndex", &SemanticCategory::index)
+      .function("getName", &SemanticCategory::name);
+
+  em::class_<SemanticObject>("SemanticObject")
+      .smart_ptr<SemanticObject::ptr>("SemanticObject::ptr")
+      .property("category", &SemanticObject::category);
+
+  em::class_<SemanticScene>("SemanticScene")
+      .smart_ptr<SemanticScene::ptr>("SemanticScene::ptr")
+      .property("objects", &SemanticScene::objects);
+
+  em::class_<Simulator>("SimulatorBase")
+      .function("getSemanticScene", &Simulator::getSemanticScene);
+
+  em::class_<SimulatorWithAgents, em::base<Simulator>>("Simulator")
       .smart_ptr_constructor(
           "Simulator",
           &SimulatorWithAgents::create<const SimulatorConfiguration&>)
@@ -189,10 +226,12 @@ EMSCRIPTEN_BINDINGS(habitat_sim_bindings_js) {
                 &SimulatorWithAgents::getAgentObservations)
       .function("getAgentObservation",
                 &SimulatorWithAgents::getAgentObservation)
+      .function("displayObservation", &SimulatorWithAgents::displayObservation)
       .function("getAgentObservationSpaces",
                 &Simulator_getAgentObservationSpaces)
       .function("getAgentObservationSpace", &Simulator_getAgentObservationSpace)
       .function("getAgent", &SimulatorWithAgents::getAgent)
+      .function("getPathFinder", &SimulatorWithAgents::getPathFinder)
       .function("addAgent",
                 em::select_overload<Agent::ptr(const AgentConfiguration&)>(
                     &SimulatorWithAgents::addAgent))

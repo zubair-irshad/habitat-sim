@@ -30,6 +30,11 @@ bool Sensor::getObservationSpace(ObservationSpace& space) {
   return false;
 }
 
+bool Sensor::displayObservation(gfx::Simulator& sim) {
+  // TODO fill out display observation if sensor supports it
+  return false;
+}
+
 void SensorSuite::add(Sensor::ptr sensor) {
   const std::string uuid = sensor->specification()->uuid;
   sensors_[uuid] = sensor;
@@ -62,7 +67,8 @@ bool operator==(const SensorSpec& a, const SensorSpec& b) {
          a.sensorSubtype == b.sensorSubtype && a.parameters == b.parameters &&
          a.position == b.position && a.orientation == b.orientation &&
          a.resolution == b.resolution && a.channels == b.channels &&
-         a.encoding == b.encoding && a.observationSpace == b.observationSpace;
+         a.encoding == b.encoding && a.observationSpace == b.observationSpace &&
+         a.gpu2gpuTransfer == b.gpu2gpuTransfer;
 }
 bool operator!=(const SensorSpec& a, const SensorSpec& b) {
   return !(a == b);
