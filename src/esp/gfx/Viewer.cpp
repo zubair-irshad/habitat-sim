@@ -131,6 +131,8 @@ Viewer::Viewer(const Arguments& arguments)
     });
   }
 
+  pathfinder_->setMaxSlideDist(0.01);
+
   renderCamera_->node().setTransformation(
       cameraNode_->absoluteTransformation());
 

@@ -154,6 +154,9 @@ class PathFinder : public std::enable_shared_from_this<PathFinder> {
 
   std::pair<vec3f, vec3f> bounds() const { return bounds_; }
 
+  float getMaxSlideDist() const;
+  void setMaxSlideDist(const float newMaxSlideDist);
+
   friend impl::ActionSpaceGraph;
 
  protected:
@@ -166,6 +169,9 @@ class PathFinder : public std::enable_shared_from_this<PathFinder> {
   dtNavMeshQuery* navQuery_;
   dtQueryFilter* filter_;
   std::pair<vec3f, vec3f> bounds_;
+
+  float maxSlideDist_ = 1e5;
+
   ESP_SMART_POINTERS(PathFinder)
 };
 

@@ -74,7 +74,9 @@ void initShortestPathBindings(py::module& m) {
            "pt"_a, "max_search_radius"_a = 2.0)
       .def("is_navigable", &PathFinder::isNavigable,
            R"(Checks to see if the agent can stand at the specified point.)",
-           "pt"_a, "max_y_delta"_a = 0.5);
+           "pt"_a, "max_y_delta"_a = 0.5)
+      .def_property("max_slide_dist", &PathFinder::getMaxSlideDist,
+                    &PathFinder::setMaxSlideDist);
 
   // this enum is used by GreedyGeodesicFollowerImpl so it needs to be defined
   // before it

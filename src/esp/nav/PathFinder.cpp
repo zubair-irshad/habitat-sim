@@ -876,9 +876,9 @@ bool didCollide(const vec3f& start,
 vec3f PathFinder::tryStep(const vec3f& start, const vec3f& end) {
   // Decreasing the stepSize increases the effective friction between the
   // agent and the wall
-  const float stepSize = 0.01;
+  const float stepSize = maxSlideDist_;
   const vec3f stepDir = (end - start).normalized();
-  const int numSteps = std::round((end - start).norm() / stepSize);
+  const int numSteps = std::ceil((end - start).norm() / stepSize);
   const float realStepSize = (end - start).norm() / numSteps;
 
   dtPolyRef trueEndPolyRef;
@@ -935,6 +935,13 @@ Mn::Vector3 PathFinder::tryStep(const Mn::Vector3& start,
                                 const Mn::Vector3& end) {
   return Mn::Vector3{tryStep(Mn::EigenIntegration::cast<vec3f>(start),
                              Mn::EigenIntegration::cast<vec3f>(end))};
+}
+
+void PathFinder::setMaxSlideDist(const float newMaxSlideDist) {
+  maxSlideDist_ = newMaxSlideDist;
+}
+float PathFinder::getMaxSlideDist() const {
+  return maxSlideDist_;
 }
 
 float PathFinder::islandRadius(const vec3f& pt) const {
