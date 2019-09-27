@@ -802,8 +802,9 @@ void PTexMeshData::uploadBuffersToGPU(bool forceReload) {
 
     currentMesh->adjFacesBufferTexture.setBuffer(
         Magnum::GL::BufferTextureFormat::R32UI, currentMesh->adjFacesBuffer);
-    currentMesh->adjFacesBuffer.setData(adjFaces[iMesh],
-                                        Magnum::GL::BufferUsage::StaticDraw);
+    // XXX
+    //currentMesh->adjFacesBuffer.setData(adjFaces[iMesh],
+    //                                    Magnum::GL::BufferUsage::StaticDraw);
     GLintptr offset = 0;
     currentMesh->mesh
         .setPrimitive(Magnum::GL::MeshPrimitive::LinesAdjacency)
@@ -860,6 +861,7 @@ void PTexMeshData::uploadBuffersToGPU(bool forceReload) {
   }
 
   buffersOnGPU_ = true;
+  LOG(INFO) << "Uploaded to GPU.";
 }
 
 PTexMeshData::RenderingBuffer* PTexMeshData::getRenderingBuffer(int submeshID) {

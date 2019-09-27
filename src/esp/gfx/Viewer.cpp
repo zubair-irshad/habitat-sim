@@ -97,9 +97,12 @@ Viewer::Viewer(const Arguments& arguments)
   // Set up camera
   renderCamera_ = &sceneGraph_->getDefaultRenderCamera();
   agentBodyNode_ = &rootNode_->createChild();
+
+  // it is actually a visual sensor
   cameraNode_ = &agentBodyNode_->createChild();
 
-  cameraNode_->translate({0.0f, cameraHeight, 0.0f});
+  // cameraNode_->translate({0.0f, cameraHeight, 0.0f});
+  cameraNode_->translate({0.0f, 0.0f, 0.0f});
   agentBodyNode_->translate({0.0f, 0.0f, 5.0f});
 
   float hfov = 90.0f;
@@ -416,11 +419,14 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       Magnum::DebugTools::screenshot(GL::defaultFramebuffer,
                                      "test_image_save.png");
       break;
+    case KeyEvent::Key::C:
+      LOG(INFO) << "haha " << Eigen::Map<mat4f>(cameraNode_->absoluteTransformation().data());
     default:
       break;
   }
   renderCamera_->node().setTransformation(
       cameraNode_->absoluteTransformation());
+
   redraw();
 }
 

@@ -27,6 +27,13 @@ RenderCamera::RenderCamera(scene::SceneNode& node,
       Matrix4::lookAt(Vector3{eye}, Vector3{target}, Vector3{up}));
 }
 
+void RenderCamera::lookAt(const vec3f& eye,
+                          const vec3f& target,
+                          const vec3f& up) {
+  this->object().setTransformation(
+      Matrix4::lookAt(Vector3{eye}, Vector3{target}, Vector3{up}));
+}
+
 void RenderCamera::setProjectionMatrix(int width,
                                        int height,
                                        float znear,

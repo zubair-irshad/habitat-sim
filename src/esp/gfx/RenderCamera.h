@@ -23,6 +23,8 @@ class RenderCamera : public Magnum::SceneGraph::AbstractFeature3D {
     // do nothing, let magnum handle the camera
   }
 
+  void lookAt(const vec3f& eye, const vec3f& target, const vec3f& up);
+
   // Get the scene node being attached to.
   scene::SceneNode& node() { return object(); }
   const scene::SceneNode& node() const { return object(); }
