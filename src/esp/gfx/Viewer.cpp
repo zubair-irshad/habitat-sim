@@ -417,17 +417,12 @@ void Viewer::keyPressEvent(KeyEvent& event) {
                                      "test_image_save.png");
       break;
     case KeyEvent::Key::C:
-      LOG(INFO) << "haha " << Eigen::Map<mat4f>(cameraNode_->absoluteTransformation().data());
+      LOG(INFO) << "haha " << Eigen::Map<mat4f>(rgbSensorNode_->absoluteTransformation().data());
     default:
       break;
   }
   renderCamera_->node().setTransformation(
-<<<<<<< HEAD
-      cameraNode_->absoluteTransformation());
-
-=======
       rgbSensorNode_->absoluteTransformation());
->>>>>>> master
   redraw();
 }
 
