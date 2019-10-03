@@ -33,7 +33,6 @@ class SceneGraph {
   void setDefaultRenderCamera(sensor::Sensor& sensor);
 
   void setCameraTransformation(mat4f& transformation);
-  // !!! H X W !!!
   void setViewport(Magnum::Vector2i& size);
 
   gfx::RenderCamera& getDefaultRenderCamera() { return defaultRenderCamera_; }

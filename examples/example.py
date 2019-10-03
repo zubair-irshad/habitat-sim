@@ -20,6 +20,7 @@ parser.add_argument("--sensor_height", type=float, default=1.5)
 parser.add_argument("--disable_color_sensor", action="store_true")
 parser.add_argument("--semantic_sensor", action="store_true")
 parser.add_argument("--depth_sensor", action="store_true")
+parser.add_argument("--camera", action='store', type=float, nargs='+')
 parser.add_argument("--print_semantic_scene", action="store_true")
 parser.add_argument("--print_semantic_mask_stats", action="store_true")
 parser.add_argument("--compute_shortest_path", action="store_true")
@@ -53,6 +54,8 @@ def make_settings():
     settings["compute_action_shortest_path"] = args.compute_action_shortest_path
     settings["seed"] = args.seed
     settings["silent"] = args.silent
+    settings["camera"] = np.array(args.camera).reshape(4, 4)
+    print("camera: ", settings["camera"])
     settings["enable_physics"] = args.enable_physics
     settings["physics_config_file"] = args.physics_config_file
 

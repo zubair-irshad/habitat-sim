@@ -48,10 +48,20 @@ std::ostream& operator<<(std::ostream& os,
   return os << matrix.format(kJsonFormat);
 }
 
+static const IOFormat flatFormat(StreamPrecision,
+                                  DontAlignCols,
+                                  " ",   // coef separator
+                                  " ",   // row separator
+                                  "",    // row prefix
+                                  "",    // col prefix
+                                  "",   // mat prefix
+                                  "");  // mat suffix
+
 //! Write Eigen map into ostream in JSON string format
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const Map<T>& m) {
-  return os << m.format(kJsonFormat);
+  //return os << m.format(kJsonFormat);
+  return os << m.format(flatFormat);
 }
 
 }  // namespace Eigen
