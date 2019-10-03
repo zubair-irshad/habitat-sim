@@ -12,7 +12,7 @@ default_sim_settings = {
     "width": 640,
     "height": 480,
     "default_agent": 0,
-    "sensor_height": 1.5,
+    "sensor_height": 0.0,
     "color_sensor": True,  # RGB sensor (default: ON)
     "semantic_sensor": False,  # semantic sensor (default: OFF)
     "depth_sensor": False,  # depth sensor (default: OFF)
@@ -28,6 +28,9 @@ default_sim_settings = {
     "test_scene_data_url": "http://dl.fbaipublicfiles.com/habitat/habitat-test-scenes.zip",
     "goal_position": [5.047, 0.199, 11.145],
     "goal_headings": [[0, -0.980_785, 0, 0.195_090], [0.0, 1.0, 0.0, 0.0]],
+#"camera": [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]],
+#"camera": [[0.55557,-0.31819,0.768178,0.720356],[0,0.92388,0.382684,0],[-0.83147,-0.212608,0.51328,-1.98927],[0,0,0,1]],
+    "camera": [[0.92388,-0.146447,0.353553,0.6],[0,0.92388,0.382683,0.4],[-0.382683,-0.353553,0.853553,-0.599997],[0,0,0,1]],
     "enable_physics": False,
     "physics_config_file": "./data/default.phys_scene_config.json",
 }
@@ -44,6 +47,7 @@ def make_cfg(settings):
     print("sim_cfg.physics_config_file = " + sim_cfg.physics_config_file)
     sim_cfg.gpu_device_id = 0
     sim_cfg.scene.id = settings["scene"]
+    sim_cfg.camera_transformation = settings["camera"]
 
     # define default sensor parameters (see src/esp/Sensor/Sensor.h)
     sensors = {

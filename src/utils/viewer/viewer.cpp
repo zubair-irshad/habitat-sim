@@ -487,6 +487,11 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       Magnum::DebugTools::screenshot(GL::defaultFramebuffer,
                                      "test_image_save.png");
       break;
+    case KeyEvent::Key::C:
+      LOG(INFO) << "Camera parameter: "
+                << Eigen::Map<mat4f>(
+                       rgbSensorNode_->absoluteTransformation().data());
+      break;
     default:
       break;
   }

@@ -154,7 +154,7 @@ class Simulator:
         self._sensors = {}
         for spec in agent_cfg.sensor_specifications:
             self._sensors[spec.uuid] = Sensor(
-                sim=self._sim, agent=self._default_agent, sensor_id=spec.uuid
+                sim=self._sim, agent=self._default_agent, sensor_id=spec.uuid, transformation = config.sim_cfg.camera_transformation
             )
 
         for i in range(len(self.agents)):
@@ -282,7 +282,7 @@ class Sensor:
     TODO(MS) define entire Sensor class in python, reducing complexity
     """
 
-    def __init__(self, sim, agent, sensor_id):
+    def __init__(self, sim, agent, sensor_id, transformation):
         global torch
         self._sim = sim
         self._agent = agent
@@ -291,8 +291,13 @@ class Sensor:
         # store such "attached object" in _sensor_object
         self._sensor_object = self._agent.sensors.get(sensor_id)
         self._spec = self._sensor_object.specification()
+        #hack, this is the transformation for default camera
+        self._transformation = transformation 
 
         self._sim.renderer.bind_render_target(self._sensor_object)
+        # resolution_debug  = self._spec.resolution
+        # print("Resolution: ", resolution_debug)
+
 
         if self._spec.gpu2gpu_transfer:
             assert (
@@ -376,7 +381,17 @@ class Sensor:
         agent_node.parent = scene.get_root_node()
 
         with self._sensor_object.render_target as tgt:
-            self._sim.renderer.draw(self._sensor_object, scene)
+            print(self._transformation)
+#scene.set_default_render_camera_transformation(self._transformation)
+#self._sim.renderer.draw(self._sensor_object, scene)
+            size = self._sensor_object.framebuffer_size
+            camera = scene.get_default_render_camera()
+            print("size", size)
+            camera.setProjectionMatrix(width=size[0], height=size[1], znear=0.01, zfar=1000.0, hfov=90.0)
+            scene.set_default_render_camera_transformation(self._transformation)
+            scene.set_default_render_camera_viewport(size)
+            self._sim.renderer.draw(camera, scene)
+  
 
     def get_observation(self):
 

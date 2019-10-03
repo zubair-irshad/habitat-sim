@@ -36,6 +36,8 @@ struct SimulatorConfiguration {
   bool compressTextures = false;
   bool createRenderer = true;
 
+  mat4f cameraTransformation = mat4f::Identity();
+
   bool enablePhysics = false;
   std::string physicsConfigFile =
       "./data/default.phys_scene_config.json";  // should we instead link a

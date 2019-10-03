@@ -4,6 +4,7 @@
 
 #include "SceneGraph.h"
 #include <Magnum/Math/Algorithms/GramSchmidt.h>
+#include <Magnum/EigenIntegration/Integration.h>
 
 namespace esp {
 namespace scene {
@@ -39,6 +40,14 @@ void SceneGraph::setDefaultRenderCamera(sensor::Sensor& sensor) {
   sensor.setProjectionMatrix(defaultRenderCamera_);
 
   defaultRenderCamera_.getMagnumCamera().setViewport(sensor.framebufferSize());
+}
+
+void SceneGraph::setCameraTransformation(mat4f& transformation) {
+    defaultRenderCameraNode_.setTransformation(Magnum::Matrix4{transformation});
+}
+
+void SceneGraph::setViewport(Magnum::Vector2i& size) {
+  defaultRenderCamera_.getMagnumCamera().setViewport(size);
 }
 
 }  // namespace scene

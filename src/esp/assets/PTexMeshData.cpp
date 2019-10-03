@@ -36,10 +36,12 @@ namespace assets {
 
 void PTexMeshData::load(const std::string& meshFile,
                         const std::string& atlasFolder) {
+/*
 #ifdef __APPLE__
   Cr::Utility::Fatal{-1} << "PTexMeshData::load: PTex mesh is not supported on "
                             "Mac in current version.";
 #endif
+*/
 
   if (!io::exists(meshFile)) {
     Cr::Utility::Fatal{-1} << "PTexMeshData::load: Mesh file" << meshFile

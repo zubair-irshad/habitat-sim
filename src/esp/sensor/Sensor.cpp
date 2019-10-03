@@ -48,6 +48,10 @@ void SensorSuite::clear() {
   sensors_.clear();
 }
 
+void Sensor::overrideTransformation(mat4f& transformation) {
+  node().setTransformation(Magnum::Matrix4{transformation});
+}
+
 void Sensor::setTransformationFromSpec() {
   if (spec_ == nullptr) {
     LOG(ERROR) << "Cannot initialize sensor. the specification is null.";

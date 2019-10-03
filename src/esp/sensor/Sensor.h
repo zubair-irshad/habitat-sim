@@ -112,6 +112,8 @@ class Sensor : public Magnum::SceneGraph::AbstractFeature3D {
   // can be called ONLY when it is attached to a scene node
   virtual void setTransformationFromSpec();
 
+  virtual void overrideTransformation(mat4f& transformation);
+
   virtual bool isVisualSensor() { return false; }
 
   // visual sensor should implement and override this function

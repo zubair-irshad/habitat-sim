@@ -32,6 +32,10 @@ class SceneGraph {
   // in the future, the parameter should be VisualSensor
   void setDefaultRenderCamera(sensor::Sensor& sensor);
 
+  void setCameraTransformation(mat4f& transformation);
+  // !!! H X W !!!
+  void setViewport(Magnum::Vector2i& size);
+
   gfx::RenderCamera& getDefaultRenderCamera() { return defaultRenderCamera_; }
 
  protected:

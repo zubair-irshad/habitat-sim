@@ -166,6 +166,16 @@ PYBIND11_MODULE(habitat_sim_bindings, m) {
             The camera will have the same absolute transformation as the target
             scene node after the operation.)",
            "targetSceneNode"_a)
+      .def("set_default_render_camera_transformation",
+           &scene::SceneGraph::setCameraTransformation,
+           R"(
+            Set transformation matrix to the default render camera.)",
+           "transformation"_a)
+      .def("set_default_render_camera_viewport",
+           &scene::SceneGraph::setViewport,
+           R"(
+            Set viewport to the default render camera.)",
+           "viewport"_a)
       .def("get_default_render_camera",
            &scene::SceneGraph::getDefaultRenderCamera,
            R"(
@@ -493,6 +503,7 @@ PYBIND11_MODULE(habitat_sim_bindings, m) {
       .def_readwrite("compress_textures",
                      &SimulatorConfiguration::compressTextures)
       .def_readwrite("create_renderer", &SimulatorConfiguration::createRenderer)
+      .def_readwrite("camera_transformation", &SimulatorConfiguration::cameraTransformation)
       .def_readwrite("enable_physics", &SimulatorConfiguration::enablePhysics)
       .def_readwrite("physics_config_file",
                      &SimulatorConfiguration::physicsConfigFile)
