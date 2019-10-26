@@ -170,7 +170,7 @@ class PathFinder : public std::enable_shared_from_this<PathFinder> {
   dtQueryFilter* filter_;
   std::pair<vec3f, vec3f> bounds_;
 
-  float maxSlideDist_ = 1e5;
+  float maxSlideDist_ = 0.001;
 
   ESP_SMART_POINTERS(PathFinder)
 };
