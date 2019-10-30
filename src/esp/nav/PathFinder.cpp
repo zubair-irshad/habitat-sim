@@ -857,7 +857,7 @@ std::tuple<dtPolyRef, vec3f> applyMoveAlongSurface(
   int numPolys;
   dtPolyRef polys[MAX_POLYS];
 
-  dtPolyRef startRef;
+  dtPolyRef startPoly;
   vec3f pathStart, pathEnd;
   std::tie(std::ignore, startPoly, pathStart) =
       projectToPoly(start, navQuery, filter);
