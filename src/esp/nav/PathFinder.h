@@ -90,7 +90,7 @@ struct NavMeshSettings {
     cellSize = 0.05f;
     cellHeight = 0.2f;
     agentHeight = 1.5f;
-    agentRadius = 0.1f;
+    agentRadius = 0.25f;
     agentMaxClimb = 0.2f;
     agentMaxSlope = 45.0f;
     regionMinSize = 20;

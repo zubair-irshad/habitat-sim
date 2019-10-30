@@ -23,6 +23,7 @@ int createNavMesh(const std::string& meshFile, const std::string& navmeshFile) {
   const MeshData mesh = loader.load(info);
   NavMeshSettings bs;
   bs.setDefaults();
+  LOG(INFO) << "Agent radius for navmesh: " << bs.agentRadius << "m";
   PathFinder pf;
   if (!pf.build(bs, mesh)) {
     LOG(ERROR) << "Failed to build navmesh";
