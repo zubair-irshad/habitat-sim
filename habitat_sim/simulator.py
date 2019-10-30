@@ -77,6 +77,7 @@ class Simulator:
         self._sim = None
 
     def seed(self, new_seed):
+        np.random.seed(new_seed)
         self._sim.seed(new_seed)
 
     def reset(self):
