@@ -44,7 +44,7 @@ using namespace Corrade;
 
 using namespace esp;
 
-constexpr float moveSensitivity = 0.1f;
+constexpr float moveSensitivity = 0.25f;
 constexpr float lookSensitivity = 11.25f;
 constexpr float rgbSensorHeight = 1.5f;
 
@@ -215,6 +215,8 @@ Viewer::Viewer(const Arguments& arguments)
       return currentPosition;
     });
   }
+
+  pathfinder_->setMaxSlideDist(0.001);
 
   renderCamera_->node().setTransformation(
       rgbSensorNode_->absoluteTransformation());
