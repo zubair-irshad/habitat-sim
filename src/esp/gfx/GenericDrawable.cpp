@@ -61,11 +61,17 @@ void GenericDrawable::draw(const Magnum::Matrix4& transformationMatrix,
     }
   }
 
+  std::vector<Magnum::Color4> finalLightColors_;
+  for (size_t i = 0; i < lightColors_.size(); i++) {
+    finalLightColors_.push_back(lightColors_[i] * lightIntensities_[i]);
+  }
+
   shader.setTransformationMatrix(transformationMatrix)
       .setProjectionMatrix(camera.projectionMatrix())
       .setNormalMatrix(transformationMatrix.rotationScaling())
       .setObjectId(node_.getId())
-      .setLightPositions(lightsTransformed);
+      .setLightPositions(lightsTransformed)
+      .setLightColors(finalLightColors_);
 
   if ((shader.flags() & Magnum::Shaders::Phong::Flag::DiffuseTexture) &&
       texture_) {

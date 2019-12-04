@@ -705,6 +705,7 @@ Magnum::GL::AbstractShaderProgram* ResourceManager::getShaderProgram(
       using namespace Magnum::Math::Literals;
 
       float lightIntensity = 0.2;
+      Magnum::Color4 lightColor = 0xffffff_rgbf;
 
       static_cast<Magnum::Shaders::Phong&>(*shaderPrograms_[type])
           .setLightColors(
@@ -1236,6 +1237,28 @@ void ResourceManager::setLightPositions(
   }
 }
 
+void ResourceManager::setLightIntensities(const std::vector<float>& intensities,
+                                          DrawableGroup* drawables) {
+  for (size_t i = 0; i < drawables->size(); i++) {
+    gfx::GenericDrawable* drawable =
+        dynamic_cast<gfx::GenericDrawable*>(&(*drawables)[i]);
+    if (drawable != nullptr) {
+      drawable->setStoredLightIntensities(intensities);
+    }
+  }
+}
+
+void ResourceManager::setLightColors(const std::vector<Magnum::Color4>& colors,
+                                     DrawableGroup* drawables) {
+  for (size_t i = 0; i < drawables->size(); i++) {
+    gfx::GenericDrawable* drawable =
+        dynamic_cast<gfx::GenericDrawable*>(&(*drawables)[i]);
+    if (drawable != nullptr) {
+      drawable->setStoredLightColors(colors);
+    }
+  }
+}
+
 void ResourceManager::createDrawable(
     const ShaderType shaderType,
     Magnum::GL::Mesh& mesh,
@@ -1262,7 +1285,18 @@ void ResourceManager::createDrawable(
         static_cast<Magnum::Shaders::Phong*>(getShaderProgram(shaderType));
     node.addFeature<gfx::GenericDrawable>(*shader, mesh, group, texture,
                                           objectId, color);
+    // set defaults
     setLightPositions(defaultLightPositions_, group);
+    float lightIntensityDefault = 0.2;
+    Magnum::Color4 lightColorDefault{1};
+    std::vector<Magnum::Color4> lightColors;
+    std::vector<float> lightIntensities;
+    for (size_t i = 0; i < defaultLightPositions_.size(); i++) {
+      lightColors.push_back(lightColorDefault);
+      lightIntensities.push_back(lightIntensityDefault);
+    }
+    setLightIntensities(lightIntensities, group);
+    setLightColors(lightColors, group);
   }
 }
 

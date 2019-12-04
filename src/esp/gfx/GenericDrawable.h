@@ -40,10 +40,24 @@ class GenericDrawable : public Drawable {
   };
 
   /**
+   * @brief Set the stored light intensities for this drawable.
+   */
+  void setStoredLightIntensities(const std::vector<float>& lightIntensities) {
+    lightIntensities_ = lightIntensities;
+  };
+
+  /**
+   * @brief Set the stored light colors for this drawable.
+   */
+  void setStoredLightColors(const std::vector<Magnum::Color4>& lightColors) {
+    lightColors_ = lightColors;
+  };
+
+  /**
    * @brief Set the light position mode for the drawable (determines how this
    * drawble consumes light positions)
    */
-  void setLightPoisitionMode(const LightPositionMode lightPositionMode) {
+  void setLightPositionMode(const LightPositionMode lightPositionMode) {
     lightPoisitonMode_ = lightPositionMode;
   };
 
@@ -58,6 +72,8 @@ class GenericDrawable : public Drawable {
   LightPositionMode lightPoisitonMode_ = GLOBAL;
 
   std::vector<Magnum::Vector3> lightPositions_;
+  std::vector<float> lightIntensities_;
+  std::vector<Magnum::Color4> lightColors_;
 };
 
 class GenericFlatDrawable : public Drawable {

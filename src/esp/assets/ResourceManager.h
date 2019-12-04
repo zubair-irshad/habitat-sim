@@ -160,6 +160,18 @@ class ResourceManager {
   void setLightPositions(const std::vector<Magnum::Vector3>& positions,
                          DrawableGroup* drawables);
 
+  /**
+   * @brief Set light intensities [0,1] for all drawables in a group
+   */
+  void setLightIntensities(const std::vector<float>& intensities,
+                           DrawableGroup* drawables);
+
+  /**
+   * @brief Set light colors for all drawables in a group
+   */
+  void setLightColors(const std::vector<Magnum::Color4>& colors,
+                      DrawableGroup* drawables);
+
  protected:
   //======== Scene Functions ========
   //! Instantiate Scene:
