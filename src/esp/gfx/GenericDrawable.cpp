@@ -5,13 +5,14 @@
 #include "GenericDrawable.h"
 
 #include <Magnum/Shaders/Flat.h>
+#include <Magnum/Shaders/Phong.h>
 
 #include "esp/scene/SceneNode.h"
 
 namespace esp {
 namespace gfx {
 
-GenericDrawable::GenericDrawable(
+GenericFlatDrawable::GenericFlatDrawable(
     scene::SceneNode& node,
     Magnum::Shaders::Flat3D& shader,
     Magnum::GL::Mesh& mesh,
@@ -24,10 +25,11 @@ GenericDrawable::GenericDrawable(
       objectId_(objectId),
       color_{color} {}
 
-void GenericDrawable::draw(const Magnum::Matrix4& transformationMatrix,
-                           Magnum::SceneGraph::Camera3D& camera) {
+void GenericFlatDrawable::draw(const Magnum::Matrix4& transformationMatrix,
+                               Magnum::SceneGraph::Camera3D& camera) {
   Magnum::Shaders::Flat3D& shader =
       static_cast<Magnum::Shaders::Flat3D&>(shader_);
+
   shader.setTransformationProjectionMatrix(camera.projectionMatrix() *
                                            transformationMatrix);
 
@@ -42,6 +44,53 @@ void GenericDrawable::draw(const Magnum::Matrix4& transformationMatrix,
   shader.setObjectId(node_.getId());
   mesh_.draw(shader_);
 }
+
+void GenericDrawable::draw(const Magnum::Matrix4& transformationMatrix,
+                           Magnum::SceneGraph::Camera3D& camera) {
+  Magnum::Shaders::Phong& shader =
+      static_cast<Magnum::Shaders::Phong&>(shader_);
+
+  std::vector<Magnum::Vector3> lightsTransformed;
+  for (auto& p : lightPositions_) {
+    if (lightPoisitonMode_ == GLOBAL) {
+      lightsTransformed.push_back(camera.cameraMatrix().transformPoint(p));
+    } else if (lightPoisitonMode_ == OBJECT) {
+      lightsTransformed.push_back(transformationMatrix.transformPoint(p));
+    } else if (lightPoisitonMode_ == CAMERA) {
+      lightsTransformed.push_back(p);
+    }
+  }
+
+  shader.setTransformationMatrix(transformationMatrix)
+      .setProjectionMatrix(camera.projectionMatrix())
+      .setNormalMatrix(transformationMatrix.rotationScaling())
+      .setObjectId(node_.getId())
+      .setLightPositions(lightsTransformed);
+
+  if ((shader.flags() & Magnum::Shaders::Phong::Flag::DiffuseTexture) &&
+      texture_) {
+    shader.bindDiffuseTexture(*texture_);
+  }
+
+  if (!(shader.flags() & Magnum::Shaders::Phong::Flag::VertexColor)) {
+    shader.setDiffuseColor(color_);
+  }
+
+  mesh_.draw(shader_);
+}
+
+GenericDrawable::GenericDrawable(
+    scene::SceneNode& node,
+    Magnum::Shaders::Phong& shader,
+    Magnum::GL::Mesh& mesh,
+    Magnum::SceneGraph::DrawableGroup3D* group /* = nullptr */,
+    Magnum::GL::Texture2D* texture /* = nullptr */,
+    int objectId /* = ID_UNDEFINED */,
+    const Magnum::Color4& color /* = Magnum::Color4{1} */)
+    : Drawable{node, shader, mesh, group},
+      texture_(texture),
+      objectId_(objectId),
+      color_{color} {}
 
 }  // namespace gfx
 }  // namespace esp

@@ -152,6 +152,14 @@ class ResourceManager {
                                scene::SceneNode& node,
                                DrawableGroup* drawables);
 
+  /**
+   * @brief Set light positions for all drawables in a group
+   * //TODO: create user accessible route for setting light info for specific
+   * drawables tied to scene or objects
+   */
+  void setLightPositions(const std::vector<Magnum::Vector3>& positions,
+                         DrawableGroup* drawables);
+
  protected:
   //======== Scene Functions ========
   //! Instantiate Scene:
@@ -161,7 +169,8 @@ class ResourceManager {
   void addComponent(const MeshMetaData& metaData,
                     scene::SceneNode& parent,
                     DrawableGroup* drawables,
-                    MeshTransformNode& meshTransformNode);
+                    MeshTransformNode& meshTransformNode,
+                    bool flatShading = false);
 
   //! Load textures from importer into assets, and update metaData
   void loadTextures(Importer& importer, MeshMetaData* metaData);
@@ -190,7 +199,8 @@ class ResourceManager {
   // If parent, also do scene graph
   bool loadGeneralMeshData(const AssetInfo& info,
                            scene::SceneNode* parent = nullptr,
-                           DrawableGroup* drawables = nullptr);
+                           DrawableGroup* drawables = nullptr,
+                           bool flatShading = false);
 
   bool loadSUNCGHouseFile(const AssetInfo& info,
                           scene::SceneNode* parent,
@@ -259,7 +269,8 @@ class ResourceManager {
                           DrawableGroup* drawables,
                           int objectID,
                           int meshIDLocal,
-                          int materialIDLocal);
+                          int materialIDLocal,
+                          bool flatShading = false);
 
   //! Types of supported Shader programs
   enum ShaderType {
@@ -268,6 +279,7 @@ class ResourceManager {
     COLORED_SHADER = 2,
     VERTEX_COLORED_SHADER = 3,
     TEXTURED_SHADER = 4,
+    FLAT_TEXTURED_SHADER = 5,
   };
 
   // maps a name to the shader program
@@ -287,7 +299,10 @@ class ResourceManager {
                       Magnum::SceneGraph::DrawableGroup3D* group = nullptr,
                       Magnum::GL::Texture2D* texture = nullptr,
                       int objectId = ID_UNDEFINED,
+                      bool flatShading = false,
                       const Magnum::Color4& color = Magnum::Color4{1});
+
+  std::vector<Magnum::Vector3> defaultLightPositions_;
 
   bool compressTextures_ = false;
 };
