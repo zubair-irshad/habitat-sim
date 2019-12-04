@@ -277,6 +277,15 @@ class Simulator {
    */
   double getWorldTime();
 
+  //! Set light positions for the current scene drawable group
+  void setLightPositions(const std::vector<Magnum::Vector3>& positions);
+
+  //! Set light colors for the current scene drawable group
+  void setLightColors(const std::vector<Magnum::Color4>& colors);
+
+  //! Set light intensities for the current scene drawable group
+  void setLightIntensities(const std::vector<float>& intensities);
+
  protected:
   Simulator(){};
 

@@ -708,11 +708,6 @@ Magnum::GL::AbstractShaderProgram* ResourceManager::getShaderProgram(
       Magnum::Color4 lightColor = 0xffffff_rgbf;
 
       static_cast<Magnum::Shaders::Phong&>(*shaderPrograms_[type])
-          .setLightColors(
-              {0xffffff_rgbf * lightIntensity, 0xffffff_rgbf * lightIntensity,
-               0xffffff_rgbf * lightIntensity, 0xffffff_rgbf * lightIntensity,
-               0xffffff_rgbf * lightIntensity, 0xffffff_rgbf * lightIntensity,
-               0xffffff_rgbf * lightIntensity, 0xffffff_rgbf * lightIntensity})
           .setSpecularColor(0x11111100_rgbaf)
           .setShininess(20.0f);
     }

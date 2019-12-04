@@ -288,6 +288,15 @@ class Simulator:
     def get_world_time(self, scene_id=0):
         return self._sim.get_world_time()
 
+    def set_light_positions(self, positions):
+        self._sim.set_light_positions(positions)
+
+    def set_light_colors(self, colors):
+        self._sim.set_light_positions(colors)
+
+    def set_light_intensities(self, intensities):
+        self._sim.set_light_positions(intensities)
+
 
 class Sensor:
     r"""Wrapper around habitat_sim.Sensor

@@ -350,5 +350,21 @@ double Simulator::getWorldTime() {
   return NO_TIME;
 }
 
+void Simulator::setLightPositions(
+    const std::vector<Magnum::Vector3>& positions) {
+  resourceManager_.setLightPositions(
+      positions, &sceneManager_.getSceneGraph(activeSceneID_).getDrawables());
+}
+
+void Simulator::setLightColors(const std::vector<Magnum::Color4>& colors) {
+  resourceManager_.setLightColors(
+      colors, &sceneManager_.getSceneGraph(activeSceneID_).getDrawables());
+}
+
+void Simulator::setLightIntensities(const std::vector<float>& intensities) {
+  resourceManager_.setLightIntensities(
+      intensities, &sceneManager_.getSceneGraph(activeSceneID_).getDrawables());
+}
+
 }  // namespace gfx
 }  // namespace esp

@@ -598,5 +598,9 @@ PYBIND11_MODULE(habitat_sim_bindings, m) {
       .def("apply_force", &Simulator::applyForce, "force"_a,
            "relative_position"_a, "object_id"_a, "sceneID"_a = 0)
       .def("apply_torque", &Simulator::applyTorque, "torque"_a, "object_id"_a,
-           "sceneID"_a = 0);
+           "sceneID"_a = 0)
+      .def("set_light_positions", &Simulator::setLightPositions, "positions"_a)
+      .def("set_light_colors", &Simulator::setLightColors, "colors"_a)
+      .def("set_light_intensities", &Simulator::setLightIntensities,
+           "intensities"_a);
 }
