@@ -217,11 +217,31 @@ class DemoRunner:
                 for obj_id in obj_ids:
                     rand_nudge = np.random.uniform(-0.05, 0.05, 3)
                     if self._sim.get_object_motion_type(obj_id) == MotionType.KINEMATIC:
-                        # TODO: just bind the trnslate function instead of emulating it here.
+                        # TODO: just bind the translate function instead of emulating it here.
                         cur_pos = self._sim.get_translation(obj_id)
                         self._sim.set_translation(cur_pos + rand_nudge, obj_id)
                     elif self._sim.get_object_motion_type(obj_id) == MotionType.DYNAMIC:
                         self._sim.apply_force(rand_nudge, np.zeros(3), obj_id)
+
+                # test light settings
+                t = float(total_frames) / (self._sim_settings["max_frames"] - 1)
+                # print(t)
+                # assume 8 lights #TODO: get/set number of lights
+                num_lights = 8
+                intensities = []
+                for i in range(num_lights):
+                    intensities.append(t)
+                self._sim.set_light_intensities(intensities)
+
+                colors = []
+                for i in range(num_lights):
+                    colors.append(np.array([t, 0, 0]))
+                self._sim.set_light_colors(colors)
+
+                positions = []
+                for i in range(num_lights):
+                    positions.append(np.array([-0.569043, 2.04804 + t * 10.0, 13.6156]))
+                self._sim.set_light_positions(positions)
 
             # get "interaction" time
             total_sim_step_time += time.time() - start_step_time

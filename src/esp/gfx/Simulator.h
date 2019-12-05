@@ -281,7 +281,7 @@ class Simulator {
   void setLightPositions(const std::vector<Magnum::Vector3>& positions);
 
   //! Set light colors for the current scene drawable group
-  void setLightColors(const std::vector<Magnum::Color4>& colors);
+  void setLightColors(const std::vector<Magnum::Vector3>& colors);
 
   //! Set light intensities for the current scene drawable group
   void setLightIntensities(const std::vector<float>& intensities);

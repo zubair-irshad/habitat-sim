@@ -292,10 +292,10 @@ class Simulator:
         self._sim.set_light_positions(positions)
 
     def set_light_colors(self, colors):
-        self._sim.set_light_positions(colors)
+        self._sim.set_light_colors(colors)
 
     def set_light_intensities(self, intensities):
-        self._sim.set_light_positions(intensities)
+        self._sim.set_light_intensities(intensities)
 
 
 class Sensor:

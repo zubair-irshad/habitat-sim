@@ -356,9 +356,14 @@ void Simulator::setLightPositions(
       positions, &sceneManager_.getSceneGraph(activeSceneID_).getDrawables());
 }
 
-void Simulator::setLightColors(const std::vector<Magnum::Color4>& colors) {
+void Simulator::setLightColors(const std::vector<Magnum::Vector3>& colors) {
+  std::vector<Magnum::Color4> converted_colors;
+  for (auto& color : colors) {
+    converted_colors.push_back(Magnum::Color4{color});
+  }
   resourceManager_.setLightColors(
-      colors, &sceneManager_.getSceneGraph(activeSceneID_).getDrawables());
+      converted_colors,
+      &sceneManager_.getSceneGraph(activeSceneID_).getDrawables());
 }
 
 void Simulator::setLightIntensities(const std::vector<float>& intensities) {
