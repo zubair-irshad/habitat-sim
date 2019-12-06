@@ -867,6 +867,8 @@ T PathFinder::tryStep(const T& start, const T& end) {
                               filter_, endPoint.data(), polys, &numPolys,
                               MAX_POLYS);
 
+  Magnum::Debug{} << endPoint;
+
   // If there isn't any possible path between start and end, just return start,
   // that is cleanest
   if (numPolys == 0) {

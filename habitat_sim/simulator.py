@@ -168,7 +168,7 @@ class Simulator:
 
         self.config = config
 
-    def get_agent(self, agent_id):
+    def get_agent(self, agent_id) -> Agent:
         return self.agents[agent_id]
 
     def initialize_agent(self, agent_id, initial_state=None):

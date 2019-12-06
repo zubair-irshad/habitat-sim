@@ -47,7 +47,7 @@ using namespace esp;
 
 constexpr float moveSensitivity = 0.1f;
 constexpr float lookSensitivity = 11.25f;
-constexpr float rgbSensorHeight = 1.5f;
+constexpr float rgbSensorHeight = 0.1f;
 
 namespace {
 
@@ -141,18 +141,20 @@ Viewer::Viewer(const Arguments& arguments)
   imgui_ = ImGuiIntegration::Context(Vector2{windowSize()} / dpiScaling(),
                                      windowSize(), framebufferSize());
 
+  GL::Renderer::enable(GL::Renderer::Feature::Blending);
   /* Set up proper blending to be used by ImGui. There's a great chance
      you'll need this exact behavior for the rest of your scene. If not, set
      this only for the drawFrame() call. */
-  GL::Renderer::setBlendEquation(GL::Renderer::BlendEquation::Add,
-                                 GL::Renderer::BlendEquation::Add);
+  /* GL::Renderer::setBlendEquation(GL::Renderer::BlendEquation::Add,
+                                 GL::Renderer::BlendEquation::Add); */
   GL::Renderer::setBlendFunction(
-      GL::Renderer::BlendFunction::SourceAlpha,
+      GL::Renderer::BlendFunction::One,
       GL::Renderer::BlendFunction::OneMinusSourceAlpha);
 
   // Setup renderer and shader defaults
   GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
   GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
+  GL::Renderer::setDepthFunction(GL::Renderer::DepthFunction::LessOrEqual);
 
   int sceneID = sceneManager_.initSceneGraph();
   sceneID_.push_back(sceneID);
@@ -202,13 +204,17 @@ Viewer::Viewer(const Arguments& arguments)
 
   // Load navmesh if available
   const std::string navmeshFilename = io::changeExtension(file, ".navmesh");
-  if (io::exists(navmeshFilename)) {
+  if (io::exists(navmeshFilename) && false) {
     LOG(INFO) << "Loading navmesh from " << navmeshFilename;
     pathfinder_->loadNavMesh(navmeshFilename);
 
     const vec3f position = pathfinder_->getRandomNavigablePoint();
     agentBodyNode_->setTranslation(Vector3(position));
   }
+
+  agentBodyNode_->setTranslation({-0.954483, -3.46876, 2.2966});
+  // agentBodyNode_->setTranslation({0.20505089, -3.468762, 2.312384});
+  agentBodyNode_->setRotation({{0., 0.91161436, 0.}, 0.41104656457901});
 
   // connect controls to navmesh if loaded
   if (pathfinder_->isLoaded()) {

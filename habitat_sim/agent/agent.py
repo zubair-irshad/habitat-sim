@@ -232,7 +232,7 @@ class Agent(object):
         return self.body.object
 
     @property
-    def state(self):
+    def state(self) -> AgentState:
         return self.get_state()
 
     @state.setter

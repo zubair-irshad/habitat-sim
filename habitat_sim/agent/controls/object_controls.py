@@ -64,6 +64,7 @@ class ObjectControls(object):
         assert move_fn is not None, f"No move_fn for action '{action_name}'"
         move_fn(obj, actuation_spec)
         end_pos = obj.absolute_translation
+        print(end_pos)
 
         collided = False
         if apply_filter:

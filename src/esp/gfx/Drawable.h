@@ -7,6 +7,9 @@
 #include "esp/core/esp.h"
 #include "magnum.h"
 
+#include <Magnum/GL/Renderer.h>
+#include <Magnum/Shaders/MeshVisualizer.h>
+
 namespace esp {
 namespace scene {
 class SceneNode;
@@ -32,6 +35,28 @@ class Drawable : public Magnum::SceneGraph::Drawable3D {
   scene::SceneNode& node_;
   Magnum::GL::AbstractShaderProgram& shader_;
   Magnum::GL::Mesh& mesh_;
+};
+
+class WireframeDrawable : public Drawable {
+ public:
+  WireframeDrawable(scene::SceneNode& node,
+                    Magnum::GL::AbstractShaderProgram& shader,
+                    Magnum::GL::Mesh& mesh,
+                    Magnum::SceneGraph::DrawableGroup3D* group = nullptr)
+      : Drawable{node, shader, mesh, group} {};
+
+ protected:
+  void draw(const Magnum::Matrix4& transformationMatrix,
+            Magnum::SceneGraph::Camera3D& camera) override {
+    Magnum::Shaders::MeshVisualizer& shader =
+        static_cast<Magnum::Shaders::MeshVisualizer&>(shader_);
+    shader.setTransformationProjectionMatrix(camera.projectionMatrix() *
+                                             transformationMatrix);
+
+    shader.setViewportSize(Magnum::Vector2{camera.viewport()});
+
+    mesh_.draw(shader_);
+  }
 };
 
 }  // namespace gfx

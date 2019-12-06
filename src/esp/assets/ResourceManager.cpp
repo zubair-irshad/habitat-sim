@@ -56,8 +56,13 @@
 #include "esp/gfx/PTexMeshShader.h"
 #endif
 
+#include <Magnum/Shaders/MeshVisualizer.h>
+
 namespace Cr = Corrade;
 namespace Mn = Magnum;
+
+static Cr::Containers::Pointer<Mn::Shaders::MeshVisualizer> wireFrameShader =
+    nullptr;
 
 namespace esp {
 namespace assets {
@@ -1197,6 +1202,17 @@ void ResourceManager::createDrawable(
         static_cast<Magnum::Shaders::Flat3D*>(getShaderProgram(shaderType));
     node.addFeature<gfx::GenericDrawable>(*shader, mesh, group, texture,
                                           objectId, color);
+
+    if (!wireFrameShader) {
+      wireFrameShader = Cr::Containers::Pointer<Mn::Shaders::MeshVisualizer>{
+          Cr::Containers::InPlaceInit,
+          Mn::Shaders::MeshVisualizer::Flag::Wireframe};
+
+      wireFrameShader->setWireframeColor({1.0, 1.0, 1.0, 1.0})
+          .setWireframeWidth(0.1)
+          .setColor({0.0, 0.0, 0.0, 0.0});
+    }
+    node.addFeature<gfx::WireframeDrawable>(*wireFrameShader, mesh, group);
   }
 }
 
