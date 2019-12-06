@@ -17,6 +17,7 @@
 #include <Magnum/MeshTools/Compile.h>
 #include <Magnum/MeshTools/Transform.h>
 #include <Magnum/SceneGraph/MatrixTransformation3D.h>
+#include <Magnum/Shaders/MeshVisualizer.h>
 
 #include "Asset.h"
 #include "Attributes.h"
@@ -290,6 +291,8 @@ class ResourceManager {
                       const Magnum::Color4& color = Magnum::Color4{1});
 
   bool compressTextures_ = false;
+
+  Corrade::Containers::Pointer<Magnum::Shaders::MeshVisualizer> wireFrameShader;
 };
 
 }  // namespace assets

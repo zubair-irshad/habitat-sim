@@ -55,7 +55,9 @@ class WireframeDrawable : public Drawable {
 
     shader.setViewportSize(Magnum::Vector2{camera.viewport()});
 
+    Magnum::GL::Renderer::enable(Magnum::GL::Renderer::Feature::Blending);
     mesh_.draw(shader_);
+    Magnum::GL::Renderer::disable(Magnum::GL::Renderer::Feature::Blending);
   }
 };
 

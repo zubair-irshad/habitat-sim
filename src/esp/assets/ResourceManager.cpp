@@ -56,13 +56,8 @@
 #include "esp/gfx/PTexMeshShader.h"
 #endif
 
-#include <Magnum/Shaders/MeshVisualizer.h>
-
 namespace Cr = Corrade;
 namespace Mn = Magnum;
-
-static Cr::Containers::Pointer<Mn::Shaders::MeshVisualizer> wireFrameShader =
-    nullptr;
 
 namespace esp {
 namespace assets {

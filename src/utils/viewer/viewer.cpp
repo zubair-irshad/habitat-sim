@@ -47,7 +47,7 @@ using namespace esp;
 
 constexpr float moveSensitivity = 0.1f;
 constexpr float lookSensitivity = 11.25f;
-constexpr float rgbSensorHeight = 0.1f;
+constexpr float rgbSensorHeight = 0.0f;
 
 namespace {
 
@@ -212,8 +212,8 @@ Viewer::Viewer(const Arguments& arguments)
     agentBodyNode_->setTranslation(Vector3(position));
   }
 
-  agentBodyNode_->setTranslation({-0.954483, -3.46876, 2.2966});
-  // agentBodyNode_->setTranslation({0.20505089, -3.468762, 2.312384});
+  // agentBodyNode_->setTranslation({-0.954483, -3.46876, 2.2966});
+  agentBodyNode_->setTranslation({0.20505089, -3.468762, 2.312384});
   agentBodyNode_->setRotation({{0., 0.91161436, 0.}, 0.41104656457901});
 
   // connect controls to navmesh if loaded
