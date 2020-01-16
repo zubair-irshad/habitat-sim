@@ -5,6 +5,7 @@
 #pragma once
 
 #include "esp/core/esp.h"
+#include "esp/gfx/DrawableGroup.h"
 #include "magnum.h"
 
 namespace esp {
@@ -16,18 +17,21 @@ namespace gfx {
 class Drawable : public Magnum::SceneGraph::Drawable3D {
  public:
   Drawable(scene::SceneNode& node,
-           Magnum::GL::AbstractShaderProgram& shader,
            Magnum::GL::Mesh& mesh,
-           Magnum::SceneGraph::DrawableGroup3D* group = nullptr);
+           DrawableGroup* group = nullptr);
   virtual ~Drawable() {}
 
   virtual scene::SceneNode& getSceneNode() { return node_; }
 
  protected:
+  virtual void draw(const Magnum::Matrix4& transformationMatrix,
+                    Magnum::SceneGraph::Camera3D& camera) override;
+
   // Each derived drawable class needs to implement this draw() function. It's
   // nothing more than setting up shader parameters and drawing the mesh.
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
-                    Magnum::SceneGraph::Camera3D& camera) = 0;
+                    Magnum::SceneGraph::Camera3D& camera,
+                    Shader& shader) = 0;
 
   scene::SceneNode& node_;
   Magnum::GL::AbstractShaderProgram& shader_;

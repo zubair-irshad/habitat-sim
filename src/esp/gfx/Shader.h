@@ -148,22 +148,25 @@ std::unique_ptr<Magnum::GL::AbstractShaderProgram> shaderProgramFactory(
 class Shader {
  public:
   explicit Shader(
-      ShaderConfig config = {} /* shaderProgramFactory = DEFAULT_FACTORY */) {
-    setConfig(config);
-  }
+      ShaderConfig config = {} /* shaderProgramFactory = DEFAULT_FACTORY */)
+      : config_{config}, shaderProgram_{shaderProgramFactory(config)} {}
 
   const ShaderConfig& getConfig() { return config_; }
 
   void setConfig(const ShaderConfig& config) {
+    if (config.id != config_.id) {
+      // TODO: I don't like this, have better logic here...
+      throw std::exception();
+    }
     config_ = config;
     // MAKE SURE WE UPDATE PROGRAM WITH NEW CONFIG
-    shaderProgram = shaderProgramFactory(config);
+    shaderProgram_ = shaderProgramFactory(config);
   }
 
  private:
   ShaderConfig config_;
 
-  std::unique_ptr<Magnum::GL::AbstractShaderProgram> shaderProgram;
+  std::unique_ptr<Magnum::GL::AbstractShaderProgram> shaderProgram_;
 };
 
 }  // namespace gfx

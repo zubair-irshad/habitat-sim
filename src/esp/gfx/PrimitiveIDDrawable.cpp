@@ -17,8 +17,9 @@ PrimitiveIDDrawable::PrimitiveIDDrawable(
     : Drawable{node, shader, mesh, group} {}
 
 void PrimitiveIDDrawable::draw(const Magnum::Matrix4& transformationMatrix,
-                               Magnum::SceneGraph::Camera3D& camera) {
-  PrimitiveIDShader& shader = static_cast<PrimitiveIDShader&>(shader_);
+                               Magnum::SceneGraph::Camera3D& camera,
+                               Shader& shader) {
+  PrimitiveIDShader& shader = static_cast<PrimitiveIDShader&>();
   shader.setTransformationProjectionMatrix(camera.projectionMatrix() *
                                            transformationMatrix);
 

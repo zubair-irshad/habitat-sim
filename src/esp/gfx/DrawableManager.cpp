@@ -9,14 +9,20 @@
 namespace esp {
 namespace gfx {
 
-DrawableManager::DrawableManager(ShaderConfig defaultShaderConfig)
+DrawableManager::DrawableManager(std::string defaultDrawableGroupId,
+                                 ShaderConfig defaultShaderConfig)
     : defaultShaderId_{defaultShaderConfig.id},
       defaultDrawableGroupId_{std::move(defaultDrawableGroupId)} {
   createDrawableGroup(defaultDrawableGroupId_);
 }
 
-bool DrawableManager::createDrawableGroup(std::string id) {
-  return drawableGroups_.emplace(std::move(id), gfx::DrawableGroup{id}).second;
+bool DrawableManager::createDrawableGroup(std::string id, Shader* shader) {
+  DrawableGroup group{id, shader};
+  return drawableGroups_.emplace(std::move(id), std::move(group)).second;
+}
+
+bool DrawableManager::createShader(const ShaderConfig& cfg) {
+  return shaders_.emplace(cfg.id, ShaderEntry{cfg}).second;
 }
 
 }  // namespace gfx

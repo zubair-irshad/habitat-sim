@@ -10,13 +10,17 @@ namespace esp {
 namespace gfx {
 
 Drawable::Drawable(scene::SceneNode& node,
-                   Magnum::GL::AbstractShaderProgram& shader,
                    Magnum::GL::Mesh& mesh,
-                   Magnum::SceneGraph::DrawableGroup3D* group /* = nullptr */)
+                   DrawableGroup* group /* = nullptr */)
     : Magnum::SceneGraph::Drawable3D{node, group},
       node_(node),
-      shader_(shader),
+      group_(group),
       mesh_(mesh) {}
+
+virtual void draw(const Magnum::Matrix4& transformationMatrix,
+                  Magnum::SceneGraph::Camera3D& camera) {
+  draw(transformationMatrix, camera, static_cast<DrawableGroup>group->shader());
+}
 
 }  // namespace gfx
 }  // namespace esp

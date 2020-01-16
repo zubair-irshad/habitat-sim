@@ -24,27 +24,36 @@ class DrawableManager {
                            ShaderConfig defaultShaderConfig = {});
 
   // Shader management
-  std::shared_ptr<ShaderType> getShaderForDrawableGroup(
-      const std::string& drawableGroupId);
-  std::shared_ptr<ShaderType> getShaderByID(const std::string& shaderId);
+
+  Shader& getShader() { return getShader(defaultShaderId_); };
+  const Shader& getShader() const { return getShader(defaultShaderId_); };
+  Shader& getShader(const std::string& shaderId) {
+    return shaders_.at(shaderId).shader;
+  };
+  const Shader& getShader(const std::string& shaderId) const {
+    return shaders_.at(shaderId).shader;
+  };
+
+  bool createShader(const ShaderConfig& cfg);
 
   // DrawableGroup management
   DrawableGroups& getDrawables() { return drawableGroups_; }
   const DrawableGroups& getDrawables() const { return drawableGroups_; }
 
-  bool createDrawableGroup(std::string id);
-
   gfx::DrawableGroup& getDrawableGroup() {
     return getDrawableGroup(defaultDrawableGroupId_);
   }
-
+  const gfx::DrawableGroup& getDrawableGroup() const {
+    return getDrawableGroup(defaultDrawableGroupId_);
+  }
   gfx::DrawableGroup& getDrawableGroup(const std::string& id) {
     return drawableGroups_.at(id);
   }
-
   const gfx::DrawableGroup& getDrawableGroup(const std::string& id) const {
     return drawableGroups_.at(id);
   }
+
+  bool createDrawableGroup(std::string id, Shader* shader = nullptr);
 
  private:
   // TODO: implement deletions using some type of ref counting
@@ -52,13 +61,12 @@ class DrawableManager {
 
   struct ShaderEntry {
     Shader shader;
-    size_t refCount;
-    ShaderDeletionPolicy deletionPolicy;
+    size_t refCount = 0;
+    ShaderDeletionPolicy deletionPolicy = ShaderDeletionPolicy::NoDeletion;
   };
 
   std::string defaultShaderId_;
-  std::map<std::string, ShaderEntry> shaderIdToShader_;
-  // std::map<std::string, std::string> drawableGroupIdToShaderId_;
+  std::map<std::string, ShaderEntry> shaders_;
   const std::string defaultDrawableGroupId_;
   // map of (drawable group ID -> drawable group) for this scene graph
   DrawableGroups drawableGroups_;
