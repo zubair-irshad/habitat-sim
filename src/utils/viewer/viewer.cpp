@@ -167,7 +167,10 @@ Viewer::Viewer(const Arguments& arguments)
   rootNode_ = &sceneGraph_->getRootNode();
   navSceneNode_ = &rootNode_->createChild();
 
-  auto& drawables = sceneGraph_->getDrawables();
+  sceneGraph_->createDrawableGroup("test1");
+  sceneGraph_->createDrawableGroup("test2");
+
+  auto& drawables = sceneGraph_->getDrawableGroup();
   const std::string& file = args.value("scene");
   const assets::AssetInfo info = assets::AssetInfo::fromPath(file);
 
@@ -265,7 +268,7 @@ void Viewer::addObject(std::string configFile) {
           ->MagnumObject::transformationMatrix();  // Relative to agent bodynode
   Vector3 new_pos = T.transformPoint({0.1f, 2.5f, -2.0f});
 
-  auto& drawables = sceneGraph_->getDrawables();
+  auto& drawables = sceneGraph_->getDrawableGroup();
 
   int physObjectID = physicsManager_->addObject(configFile, &drawables);
   physicsManager_->setTranslation(physObjectID, new_pos);
@@ -397,7 +400,7 @@ void Viewer::drawEvent() {
   int DEFAULT_SCENE = 0;
   int sceneID = sceneID_[DEFAULT_SCENE];
   auto& sceneGraph = sceneManager_.getSceneGraph(sceneID);
-  renderCamera_->draw(sceneGraph.getDrawables());
+  renderCamera_->draw(sceneGraph.getDrawableGroup());
 
   if (debugBullet_) {
     Magnum::Matrix4 camM(renderCamera_->cameraMatrix());
@@ -593,7 +596,7 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       // toggle bounding box on objects
       drawObjectBBs = !drawObjectBBs;
       for (auto id : physicsManager_->getExistingObjectIDs()) {
-        physicsManager_->setObjectBBDraw(id, &sceneGraph_->getDrawables(),
+        physicsManager_->setObjectBBDraw(id, &sceneGraph_->getDrawableGroup(),
                                          drawObjectBBs);
       }
     } break;

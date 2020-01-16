@@ -5,6 +5,7 @@
 #pragma once
 
 #include "esp/core/esp.h"
+#include "esp/gfx/DrawableGroup.h"
 #include "esp/gfx/magnum.h"
 
 #include "SceneNode.h"
@@ -21,11 +22,6 @@ class SceneGraph {
 
   SceneNode& getRootNode() { return rootNode_; }
   const SceneNode& getRootNode() const { return rootNode_; }
-
-  Magnum::SceneGraph::DrawableGroup3D& getDrawables() { return drawables_; }
-  const Magnum::SceneGraph::DrawableGroup3D& getDrawables() const {
-    return drawables_;
-  }
 
   // set the transformation, projection matrix to the default camera
   // TODO:
@@ -69,9 +65,6 @@ class SceneGraph {
   // etc.) and add it to the drawable group of that scene. This is done on the
   // fly when we build the scene graph
 
-  // drawable groups for each scene graph
-  // each item is a group of drawables.
-  Magnum::SceneGraph::DrawableGroup3D drawables_;
 };
 }  // namespace scene
 }  // namespace esp
