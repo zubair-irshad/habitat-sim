@@ -9,17 +9,16 @@
 namespace esp {
 namespace gfx {
 
-PrimitiveIDDrawable::PrimitiveIDDrawable(
-    scene::SceneNode& node,
-    PrimitiveIDShader& shader,
-    Magnum::GL::Mesh& mesh,
-    Magnum::SceneGraph::DrawableGroup3D* group /* = nullptr */)
-    : Drawable{node, shader, mesh, group} {}
+PrimitiveIDDrawable::PrimitiveIDDrawable(scene::SceneNode& node,
+                                         Magnum::GL::Mesh& mesh,
+                                         DrawableGroup* group /* = nullptr */)
+    : Drawable{node, mesh, group} {}
 
 void PrimitiveIDDrawable::draw(const Magnum::Matrix4& transformationMatrix,
                                Magnum::SceneGraph::Camera3D& camera,
-                               Shader& shader) {
-  PrimitiveIDShader& shader = static_cast<PrimitiveIDShader&>();
+                               Shader* shader) {
+  PrimitiveIDShader& shader =
+      static_cast<PrimitiveIDShader&>(*shader->getShaderProgram());
   shader.setTransformationProjectionMatrix(camera.projectionMatrix() *
                                            transformationMatrix);
 

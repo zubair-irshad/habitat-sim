@@ -151,7 +151,10 @@ class Shader {
       ShaderConfig config = {} /* shaderProgramFactory = DEFAULT_FACTORY */)
       : config_{config}, shaderProgram_{shaderProgramFactory(config)} {}
 
-  const ShaderConfig& getConfig() { return config_; }
+  const ShaderConfig& getConfig() const { return config_; }
+  Magnum::GL::AbstractShaderProgram* getShaderProgram() {
+    return shaderProgram_.get();
+  }
 
   void setConfig(const ShaderConfig& config) {
     if (config.id != config_.id) {

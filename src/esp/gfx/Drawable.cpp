@@ -19,7 +19,7 @@ Drawable::Drawable(scene::SceneNode& node,
 
 virtual void draw(const Magnum::Matrix4& transformationMatrix,
                   Magnum::SceneGraph::Camera3D& camera) {
-  draw(transformationMatrix, camera, static_cast<DrawableGroup>group->shader());
+  draw(transformationMatrix, camera, group_->shader());
 }
 
 }  // namespace gfx

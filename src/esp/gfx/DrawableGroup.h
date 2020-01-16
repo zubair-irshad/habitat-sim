@@ -5,8 +5,8 @@
 #pragma once
 
 #include <Magnum/SceneGraph/SceneGraph.h>
-#include "esp/gfx/Shader.h"
 #include "esp/gfx/Drawable.h"
+#include "esp/gfx/Shader.h"
 
 namespace esp {
 namespace gfx {
@@ -15,7 +15,7 @@ namespace gfx {
  * @brief Class which manages a drawable group, and related settings for that
  * drawable group
  */
-class DrawableGroup : public Magnum::SceneGraph::FeatureGroup3D<Drawable> {
+class DrawableGroup : public Magnum::SceneGraph::DrawableGroup3D {
  public:
   explicit DrawableGroup(std::string id, Shader* shader = nullptr)
       : Magnum::SceneGraph::DrawableGroup3D{},
@@ -24,7 +24,17 @@ class DrawableGroup : public Magnum::SceneGraph::FeatureGroup3D<Drawable> {
 
   const std::string& getId() const { return id_; }
 
-  // OVERRIDE ADD/REMOVE TO RESET drawable group!!!
+  DrawableGroup& add(Drawable& drawable) {
+    Magnum::SceneGraph::DrawableGroup3D::add(
+        static_cast<Magnum::SceneGraph::Drawable3D&>(drawable));
+    DrawableGroupClient::setGroup(drawable, this);
+  }
+
+  DrawableGroup& remove(Drawable& drawable) {
+    Magnum::SceneGraph::DrawableGroup3D::remove(
+        static_cast<Magnum::SceneGraph::Drawable3D&>(drawable));
+    DrawableGroupClient::setGroup(drawable, nullptr);
+  }
 
   Shader* shader() { return shader_; }
 

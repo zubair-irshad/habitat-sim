@@ -25,7 +25,8 @@ class PrimitiveIDDrawable : public Drawable {
 
  protected:
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
-                    Magnum::SceneGraph::Camera3D& camera) override;
+                    Magnum::SceneGraph::Camera3D& camera,
+                    Shader* shader) override;
 };
 
 }  // namespace gfx

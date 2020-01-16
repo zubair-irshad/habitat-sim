@@ -9,14 +9,11 @@
 namespace esp {
 namespace gfx {
 
-PTexMeshDrawable::PTexMeshDrawable(
-    scene::SceneNode& node,
-    PTexMeshShader& shader,
-    assets::PTexMeshData& ptexMeshData,
-    int submeshID,
-    Magnum::SceneGraph::DrawableGroup3D* group /* = nullptr */)
-    : Drawable{node, shader, ptexMeshData.getRenderingBuffer(submeshID)->mesh,
-               group},
+PTexMeshDrawable::PTexMeshDrawable(scene::SceneNode& node,
+                                   assets::PTexMeshData& ptexMeshData,
+                                   int submeshID,
+                                   DrawableGroup* group /* = nullptr */)
+    : Drawable{node, ptexMeshData.getRenderingBuffer(submeshID)->mesh, group},
       atlasTexture_(ptexMeshData.getRenderingBuffer(submeshID)->atlasTexture),
 #ifndef CORRADE_TARGET_APPLE
       adjFacesBufferTexture_(
@@ -29,8 +26,10 @@ PTexMeshDrawable::PTexMeshDrawable(
 }
 
 void PTexMeshDrawable::draw(const Magnum::Matrix4& transformationMatrix,
-                            Magnum::SceneGraph::Camera3D& camera) {
-  PTexMeshShader& ptexMeshShader = static_cast<PTexMeshShader&>(shader_);
+                            Magnum::SceneGraph::Camera3D& camera,
+                            Shader* shader) {
+  PTexMeshShader& ptexMeshShader =
+      static_cast<PTexMeshShader&>(*shader->getShaderProgram());
   ptexMeshShader.setExposure(exposure_)
       .setGamma(gamma_)
       .setSaturation(saturation_)

@@ -13,36 +13,58 @@ namespace gfx {
 
 GenericDrawable::GenericDrawable(
     scene::SceneNode& node,
-    Magnum::Shaders::Phong& shader,
     Magnum::GL::Mesh& mesh,
-    Magnum::SceneGraph::DrawableGroup3D* group /* = nullptr */,
+    DrawableGroup* group /* = nullptr */,
     Magnum::GL::Texture2D* texture /* = nullptr */,
     int objectId /* = ID_UNDEFINED */,
     const Magnum::Color4& color /* = Magnum::Color4{1} */)
-    : Drawable{node, shader, mesh, group},
+    : Drawable{node, mesh, group},
       texture_(texture),
       objectId_(objectId),
       color_{color} {}
 
 void GenericDrawable::draw(const Magnum::Matrix4& transformationMatrix,
-                           Magnum::SceneGraph::Camera3D& camera) {
-  Magnum::Shaders::Phong& shader =
-      static_cast<Magnum::Shaders::Phong&>(shader_);
-  shader.setTransformationMatrix(transformationMatrix)
-      .setProjectionMatrix(camera.projectionMatrix())
-      .setNormalMatrix(transformationMatrix.rotationScaling())
-      .setObjectId(node_.getId());
+                           Magnum::SceneGraph::Camera3D& camera,
+                           Shader* shader) {
+  ShaderType type = shader.getConfig().type;
+  Magnum::GL::AbstractShaderProgram* shaderProgram = shader->getShaderProgram();
 
-  if ((shader.flags() & Magnum::Shaders::Phong::Flag::DiffuseTexture) &&
-      texture_) {
-    shader.bindDiffuseTexture(*texture_);
+  // TODO: use polymorphism to do double dispatch here
+  if (type == COLORED_SHADER_PHONG || type == VERTEX_COLORED_SHADER_PHONG ||
+      type == TEXTURED_SHADER_PHONG) {
+    Magnum::Shaders::Phong& shader =
+        static_cast<Magnum::Shaders::Phong&>(*shaderProgram);
+    shader.setTransformationMatrix(transformationMatrix)
+        .setProjectionMatrix(camera.projectionMatrix())
+        .setNormalMatrix(transformationMatrix.rotationScaling())
+        .setObjectId(node_.getId());
+
+    if ((shader.flags() & Magnum::Shaders::Phong::Flag::DiffuseTexture) &&
+        texture_) {
+      shader.bindDiffuseTexture(*texture_);
+    }
+
+    if (!(shader.flags() & Magnum::Shaders::Phong::Flag::VertexColor)) {
+      shader.setDiffuseColor(color_);
+    }
+
+  } else {
+    Magnum::Shaders::Flat3D& shader =
+        static_cast<Magnum::Shaders::Flat3D&>(*shaderProgram);
+    shader.setTransformationProjectionMatrix(camera.projectionMatrix() *
+                                             transformationMatrix);
+
+    if ((shader.flags() & Magnum::Shaders::Flat3D::Flag::Textured) &&
+        texture_) {
+      shader.bindTexture(*texture_);
+    }
+    if (!(shader.flags() & Magnum::Shaders::Flat3D::Flag::VertexColor)) {
+      shader.setColor(color_);
+    }
+
+    shader.setObjectId(node_.getId());
   }
-
-  if (!(shader.flags() & Magnum::Shaders::Phong::Flag::VertexColor)) {
-    shader.setDiffuseColor(color_);
-  }
-
-  mesh_.draw(shader_);
+  mesh_.draw(shaderProgram);
 }
 
 }  // namespace gfx

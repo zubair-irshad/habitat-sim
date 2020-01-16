@@ -17,16 +17,15 @@ class PTexMeshShader;
 
 class PTexMeshDrawable : public Drawable {
  public:
-  explicit PTexMeshDrawable(
-      scene::SceneNode& node,
-      PTexMeshShader& shader,
-      assets::PTexMeshData& ptexMeshData,
-      int submeshID,
-      Magnum::SceneGraph::DrawableGroup3D* group = nullptr);
+  explicit PTexMeshDrawable(scene::SceneNode& node,
+                            assets::PTexMeshData& ptexMeshData,
+                            int submeshID,
+                            DrawableGroup* group = nullptr);
 
  protected:
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
-                    Magnum::SceneGraph::Camera3D& camera) override;
+                    Magnum::SceneGraph::Camera3D& camera,
+                    Shader* shader) override;
 
   Magnum::GL::Texture2D& atlasTexture_;
 #ifndef CORRADE_TARGET_APPLE

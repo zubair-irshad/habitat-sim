@@ -14,7 +14,11 @@ class SceneNode;
 }
 namespace gfx {
 
+class DrawableGroupClient;
+
 class Drawable : public Magnum::SceneGraph::Drawable3D {
+  friend DrawableGroupClient;
+
  public:
   Drawable(scene::SceneNode& node,
            Magnum::GL::Mesh& mesh,
@@ -22,6 +26,8 @@ class Drawable : public Magnum::SceneGraph::Drawable3D {
   virtual ~Drawable() {}
 
   virtual scene::SceneNode& getSceneNode() { return node_; }
+
+  Drawable& setGroup(DrawableGroup* group) { group_ = group; }
 
  protected:
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
@@ -31,11 +37,24 @@ class Drawable : public Magnum::SceneGraph::Drawable3D {
   // nothing more than setting up shader parameters and drawing the mesh.
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
                     Magnum::SceneGraph::Camera3D& camera,
-                    Shader& shader) = 0;
+                    Shader* shader) = 0;
 
   scene::SceneNode& node_;
-  Magnum::GL::AbstractShaderProgram& shader_;
+  DrawableGroup* group_;
   Magnum::GL::Mesh& mesh_;
+};
+
+/**
+ * @brief Class to expose group membership to Drawable Groups (Attorney-Client
+ * pattern)
+ */
+class DrawableGroupClient {
+ private:
+  static DrawableGroup* getGroup(Drawable& d) { return d.group_; }
+  static DrawableGroup* setGroup(Drawable& d, DrawableGroup* g) {
+    d.group_ = g;
+  }
+  friend class DrawableGroup;
 };
 
 }  // namespace gfx
