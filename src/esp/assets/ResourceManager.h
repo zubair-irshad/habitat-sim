@@ -44,7 +44,8 @@ class PhongMaterialData;
 namespace esp {
 namespace gfx {
 class Drawable;
-}
+class DrawableGroup;
+}  // namespace gfx
 namespace scene {
 struct SceneConfiguration;
 }
@@ -68,7 +69,7 @@ class ResourceManager {
   ~ResourceManager() {}
 
   /** @brief Stores references to a set of drawable elements */
-  using DrawableGroup = Magnum::SceneGraph::DrawableGroup3D;
+  using DrawableGroup = gfx::DrawableGroup;
   /** @brief Convenience typedef for Importer class */
   using Importer = Magnum::Trade::AbstractImporter;
 

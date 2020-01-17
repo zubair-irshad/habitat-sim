@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <Magnum/Shaders/Shaders.h>
-
 #include "esp/gfx/DrawableGroup.h"
 #include "esp/gfx/Shader.h"
 
@@ -16,12 +14,12 @@ namespace gfx {
  * @brief Class which manages shaders, TODO(MM): scene graph and drawable groups
  */
 class DrawableManager {
-  using ShaderType = Magnum::GL::AbstractShaderProgram;
   using DrawableGroups = std::map<std::string, DrawableGroup>;
 
  public:
+  // TODO: what if defaultDrawableGroup doesn't use default shader?
   explicit DrawableManager(std::string defaultDrawableGroupId = {},
-                           ShaderConfig defaultShaderConfig = {});
+                           const ShaderConfig& defaultShaderConfig = {});
 
   // Shader management
 

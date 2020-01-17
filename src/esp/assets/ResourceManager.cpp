@@ -803,8 +803,7 @@ bool ResourceManager::loadPTexMeshData(const AssetInfo& info,
         scene::SceneNode& node = parent->createChild();
         const quatf transform = info.frame.rotationFrameToWorld();
         node.setRotation(Magnum::Quaternion(transform));
-        new gfx::PTexMeshDrawable{node, *ptexShader, *pTexMeshData, jSubmesh,
-                                  drawables};
+        new gfx::PTexMeshDrawable{node, *pTexMeshData, jSubmesh, drawables};
       }
     }
   }
@@ -1265,7 +1264,7 @@ void ResourceManager::createDrawable(
     const ShaderType shaderType,
     Magnum::GL::Mesh& mesh,
     scene::SceneNode& node,
-    Magnum::SceneGraph::DrawableGroup3D* group /* = nullptr */,
+    DrawableGroup* group /* = nullptr */,
     Magnum::GL::Texture2D* texture /* = nullptr */,
     int objectId /* = ID_UNDEFINED */,
     const Magnum::Color4& color /* = Magnum::Color4{1} */) {
@@ -1275,12 +1274,12 @@ void ResourceManager::createDrawable(
   } else if (shaderType == INSTANCE_MESH_SHADER) {
     auto* shader =
         static_cast<gfx::PrimitiveIDShader*>(getShaderProgram(shaderType));
-    node.addFeature<gfx::PrimitiveIDDrawable>(*shader, mesh, group);
+    node.addFeature<gfx::PrimitiveIDDrawable>(mesh, group);
   } else {  // all other shaders use GenericShader
     auto* shader =
         static_cast<Magnum::Shaders::Phong*>(getShaderProgram(shaderType));
-    node.addFeature<gfx::GenericDrawable>(*shader, mesh, group, texture,
-                                          objectId, color);
+    node.addFeature<gfx::GenericDrawable>(mesh, group, texture, objectId,
+                                          color);
   }
 }
 

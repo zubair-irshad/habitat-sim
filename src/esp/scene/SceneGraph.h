@@ -5,7 +5,7 @@
 #pragma once
 
 #include "esp/core/esp.h"
-#include "esp/gfx/DrawableGroup.h"
+#include "esp/gfx/DrawableManager.h"
 #include "esp/gfx/magnum.h"
 
 #include "SceneNode.h"
@@ -33,6 +33,8 @@ class SceneGraph {
   /* @brief check if the scene node is the root node of the scene graph.
    */
   static bool isRootNode(SceneNode& node);
+
+  gfx::DrawableManager& drawableManager() { return drawableManager_; }
 
  protected:
   MagnumScene world_;
@@ -64,7 +66,7 @@ class SceneGraph {
   // we create a drawable object (e.g., PTexMeshDrawable, InstanceMeshDrawable,
   // etc.) and add it to the drawable group of that scene. This is done on the
   // fly when we build the scene graph
-
+  gfx::DrawableManager drawableManager_;
 };
 }  // namespace scene
 }  // namespace esp

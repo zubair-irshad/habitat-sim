@@ -4,6 +4,7 @@
 
 #include "Drawable.h"
 
+#include "esp/gfx/DrawableGroup.h"
 #include "esp/scene/SceneNode.h"
 
 namespace esp {
@@ -12,13 +13,15 @@ namespace gfx {
 Drawable::Drawable(scene::SceneNode& node,
                    Magnum::GL::Mesh& mesh,
                    DrawableGroup* group /* = nullptr */)
-    : Magnum::SceneGraph::Drawable3D{node, group},
-      node_(node),
-      group_(group),
-      mesh_(mesh) {}
+    : Magnum::SceneGraph::Drawable3D{node}, node_(node), mesh_(mesh) {
+  if (group) {
+    group->add(*this);
+    LOG(INFO) << "New drawable created in group: " << group->id();
+  }
+}
 
-virtual void draw(const Magnum::Matrix4& transformationMatrix,
-                  Magnum::SceneGraph::Camera3D& camera) {
+void Drawable::draw(const Magnum::Matrix4& transformationMatrix,
+                    Magnum::SceneGraph::Camera3D& camera) {
   draw(transformationMatrix, camera, group_->shader());
 }
 

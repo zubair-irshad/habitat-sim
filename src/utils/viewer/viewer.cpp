@@ -1,4 +1,3 @@
-// Copyright (c) Facebook, Inc. and its affiliates.
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
@@ -33,6 +32,7 @@
 #include <sophus/so3.hpp>
 #include "esp/core/esp.h"
 #include "esp/gfx/Drawable.h"
+#include "esp/gfx/Shader.h"
 #include "esp/io/io.h"
 
 #include "esp/scene/SceneConfiguration.h"
@@ -167,10 +167,12 @@ Viewer::Viewer(const Arguments& arguments)
   rootNode_ = &sceneGraph_->getRootNode();
   navSceneNode_ = &rootNode_->createChild();
 
-  sceneGraph_->createDrawableGroup("test1");
-  sceneGraph_->createDrawableGroup("test2");
+  sceneGraph_->drawableManager().createShader(
+      gfx::ShaderConfig{"physics", gfx::ShaderType::COLORED_SHADER_PHONG, 3});
+  gfx::Shader& s = sceneGraph_->drawableManager().getShader("physics");
+  sceneGraph_->drawableManager().createDrawableGroup("physics", &s);
 
-  auto& drawables = sceneGraph_->getDrawableGroup();
+  auto& drawables = sceneGraph_->drawableManager().getDrawableGroup();
   const std::string& file = args.value("scene");
   const assets::AssetInfo info = assets::AssetInfo::fromPath(file);
 
@@ -268,7 +270,9 @@ void Viewer::addObject(std::string configFile) {
           ->MagnumObject::transformationMatrix();  // Relative to agent bodynode
   Vector3 new_pos = T.transformPoint({0.1f, 2.5f, -2.0f});
 
-  auto& drawables = sceneGraph_->getDrawableGroup();
+  auto& drawables = sceneGraph_->drawableManager().getDrawableGroup("physics");
+  LOG(INFO) << "adding object using shader: "
+            << drawables.shader()->getConfig().type;
 
   int physObjectID = physicsManager_->addObject(configFile, &drawables);
   physicsManager_->setTranslation(physObjectID, new_pos);
@@ -400,7 +404,9 @@ void Viewer::drawEvent() {
   int DEFAULT_SCENE = 0;
   int sceneID = sceneID_[DEFAULT_SCENE];
   auto& sceneGraph = sceneManager_.getSceneGraph(sceneID);
-  renderCamera_->draw(sceneGraph.getDrawableGroup());
+  for (auto& idAndDrawableGroup : sceneGraph.drawableManager().getDrawables()) {
+    renderCamera_->draw(idAndDrawableGroup.second);
+  }
 
   if (debugBullet_) {
     Magnum::Matrix4 camM(renderCamera_->cameraMatrix());
@@ -584,10 +590,28 @@ void Viewer::keyPressEvent(KeyEvent& event) {
     case KeyEvent::Key::V:
       invertGravity();
       break;
-    case KeyEvent::Key::T:
+    case KeyEvent::Key::T: {
       // Test key. Put what you want here...
-      torqueLastObject();
-      break;
+      // torqueLastObject();
+      esp::gfx::Shader& currShader = sceneGraph_->drawableManager().getShader();
+      auto cfg = currShader.getConfig();
+      if (cfg.type == esp::gfx::TEXTURED_SHADER_PHONG) {
+        cfg.type = esp::gfx::TEXTURED_SHADER;
+      } else {
+        cfg.type = esp::gfx::TEXTURED_SHADER_PHONG;
+      }
+      currShader.setConfig(cfg);
+
+      esp::gfx::Shader& physicsShader =
+          sceneGraph_->drawableManager().getShader("physics");
+      cfg = physicsShader.getConfig();
+      if (cfg.type == esp::gfx::COLORED_SHADER_PHONG) {
+        cfg.type = esp::gfx::COLORED_SHADER;
+      } else {
+        cfg.type = esp::gfx::COLORED_SHADER_PHONG;
+      }
+      physicsShader.setConfig(cfg);
+    } break;
     case KeyEvent::Key::I:
       Magnum::DebugTools::screenshot(GL::defaultFramebuffer,
                                      "test_image_save.png");
@@ -596,8 +620,9 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       // toggle bounding box on objects
       drawObjectBBs = !drawObjectBBs;
       for (auto id : physicsManager_->getExistingObjectIDs()) {
-        physicsManager_->setObjectBBDraw(id, &sceneGraph_->getDrawableGroup(),
-                                         drawObjectBBs);
+        physicsManager_->setObjectBBDraw(
+            id, &sceneGraph_->drawableManager().getDrawableGroup(),
+            drawObjectBBs);
       }
     } break;
     default:

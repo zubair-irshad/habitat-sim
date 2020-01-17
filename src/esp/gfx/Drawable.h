@@ -6,6 +6,7 @@
 
 #include "esp/core/esp.h"
 #include "esp/gfx/DrawableGroup.h"
+#include "esp/gfx/Shader.h"
 #include "magnum.h"
 
 namespace esp {
@@ -27,7 +28,10 @@ class Drawable : public Magnum::SceneGraph::Drawable3D {
 
   virtual scene::SceneNode& getSceneNode() { return node_; }
 
-  Drawable& setGroup(DrawableGroup* group) { group_ = group; }
+  Drawable& setGroup(DrawableGroup* group) {
+    group_ = group;
+    return *this;
+  }
 
  protected:
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
@@ -51,9 +55,7 @@ class Drawable : public Magnum::SceneGraph::Drawable3D {
 class DrawableGroupClient {
  private:
   static DrawableGroup* getGroup(Drawable& d) { return d.group_; }
-  static DrawableGroup* setGroup(Drawable& d, DrawableGroup* g) {
-    d.group_ = g;
-  }
+  static void setGroup(Drawable& d, DrawableGroup* g) { d.group_ = g; }
   friend class DrawableGroup;
 };
 

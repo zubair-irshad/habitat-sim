@@ -26,43 +26,49 @@ GenericDrawable::GenericDrawable(
 void GenericDrawable::draw(const Magnum::Matrix4& transformationMatrix,
                            Magnum::SceneGraph::Camera3D& camera,
                            Shader* shader) {
-  ShaderType type = shader.getConfig().type;
-  Magnum::GL::AbstractShaderProgram* shaderProgram = shader->getShaderProgram();
+  ShaderType type = shader->getConfig().type;
+  Magnum::GL::AbstractShaderProgram& shaderProgram =
+      *shader->getShaderProgram();
 
   // TODO: use polymorphism to do double dispatch here
   if (type == COLORED_SHADER_PHONG || type == VERTEX_COLORED_SHADER_PHONG ||
       type == TEXTURED_SHADER_PHONG) {
-    Magnum::Shaders::Phong& shader =
-        static_cast<Magnum::Shaders::Phong&>(*shaderProgram);
-    shader.setTransformationMatrix(transformationMatrix)
+    if (!group_->id().empty())
+      LOG(INFO) << "DRAWING PHONG";
+
+    Magnum::Shaders::Phong& phongShader =
+        static_cast<Magnum::Shaders::Phong&>(shaderProgram);
+    phongShader.setTransformationMatrix(transformationMatrix)
         .setProjectionMatrix(camera.projectionMatrix())
         .setNormalMatrix(transformationMatrix.rotationScaling())
         .setObjectId(node_.getId());
 
-    if ((shader.flags() & Magnum::Shaders::Phong::Flag::DiffuseTexture) &&
+    if ((phongShader.flags() & Magnum::Shaders::Phong::Flag::DiffuseTexture) &&
         texture_) {
-      shader.bindDiffuseTexture(*texture_);
+      phongShader.bindDiffuseTexture(*texture_);
     }
 
-    if (!(shader.flags() & Magnum::Shaders::Phong::Flag::VertexColor)) {
-      shader.setDiffuseColor(color_);
+    if (!(phongShader.flags() & Magnum::Shaders::Phong::Flag::VertexColor)) {
+      phongShader.setDiffuseColor(color_);
     }
 
   } else {
-    Magnum::Shaders::Flat3D& shader =
-        static_cast<Magnum::Shaders::Flat3D&>(*shaderProgram);
-    shader.setTransformationProjectionMatrix(camera.projectionMatrix() *
-                                             transformationMatrix);
+    if (!group_->id().empty())
+      LOG(INFO) << "DRAWING FLAT";
+    Magnum::Shaders::Flat3D& flatShader =
+        static_cast<Magnum::Shaders::Flat3D&>(shaderProgram);
+    flatShader.setTransformationProjectionMatrix(camera.projectionMatrix() *
+                                                 transformationMatrix);
 
-    if ((shader.flags() & Magnum::Shaders::Flat3D::Flag::Textured) &&
+    if ((flatShader.flags() & Magnum::Shaders::Flat3D::Flag::Textured) &&
         texture_) {
-      shader.bindTexture(*texture_);
+      flatShader.bindTexture(*texture_);
     }
-    if (!(shader.flags() & Magnum::Shaders::Flat3D::Flag::VertexColor)) {
-      shader.setColor(color_);
+    if (!(flatShader.flags() & Magnum::Shaders::Flat3D::Flag::VertexColor)) {
+      flatShader.setColor(color_);
     }
 
-    shader.setObjectId(node_.getId());
+    flatShader.setObjectId(node_.getId());
   }
   mesh_.draw(shaderProgram);
 }

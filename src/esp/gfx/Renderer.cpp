@@ -34,7 +34,8 @@ struct Renderer::Impl {
 
   void draw(RenderCamera& camera, scene::SceneGraph& sceneGraph) {
     // TODO(MM): make this nicely iterable without needing pair
-    for (auto idAndDrawableGroup : sceneGraph.getDrawables()) {
+    for (auto& idAndDrawableGroup :
+         sceneGraph.drawableManager().getDrawables()) {
       camera.draw(idAndDrawableGroup.second);
     }
   }

@@ -17,12 +17,12 @@ PrimitiveIDDrawable::PrimitiveIDDrawable(scene::SceneNode& node,
 void PrimitiveIDDrawable::draw(const Magnum::Matrix4& transformationMatrix,
                                Magnum::SceneGraph::Camera3D& camera,
                                Shader* shader) {
-  PrimitiveIDShader& shader =
+  PrimitiveIDShader& shaderProgram =
       static_cast<PrimitiveIDShader&>(*shader->getShaderProgram());
-  shader.setTransformationProjectionMatrix(camera.projectionMatrix() *
-                                           transformationMatrix);
+  shaderProgram.setTransformationProjectionMatrix(camera.projectionMatrix() *
+                                                  transformationMatrix);
 
-  mesh_.draw(shader_);
+  mesh_.draw(shaderProgram);
 }
 
 }  // namespace gfx

@@ -90,7 +90,7 @@ void Simulator::reconfigure(const SimulatorConfiguration& cfg) {
     auto& sceneGraph = sceneManager_.getSceneGraph(activeSceneID_);
 
     auto& rootNode = sceneGraph.getRootNode();
-    auto& drawables = sceneGraph.getDrawableGroup();
+    auto& drawables = sceneGraph.drawableManager().getDrawableGroup();
     resourceManager_.compressTextures(cfg.compressTextures);
 
     bool loadSuccess = false;
@@ -121,7 +121,8 @@ void Simulator::reconfigure(const SimulatorConfiguration& cfg) {
         auto& semanticSceneGraph =
             sceneManager_.getSceneGraph(activeSemanticSceneID_);
         auto& semanticRootNode = semanticSceneGraph.getRootNode();
-        auto& semanticDrawables = semanticSceneGraph.getDrawableGroup();
+        auto& semanticDrawables =
+            semanticSceneGraph.drawableManager().getDrawableGroup();
         const assets::AssetInfo semanticSceneInfo =
             assets::AssetInfo::fromPath(semanticMeshFilename);
         resourceManager_.loadScene(semanticSceneInfo, &semanticRootNode,
@@ -232,7 +233,7 @@ int Simulator::addObject(const int objectLibIndex, const int sceneID) {
     // TODO: change implementation to support multi-world and physics worlds to
     // own reference to a sceneGraph to avoid this.
     auto& sceneGraph_ = sceneManager_.getSceneGraph(activeSceneID_);
-    auto& drawables = sceneGraph_.getDrawableGroup();
+    auto& drawables = sceneGraph_.drawableManager().getDrawableGroup();
     return physicsManager_->addObject(objectLibIndex, &drawables);
   }
   return ID_UNDEFINED;

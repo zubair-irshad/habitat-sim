@@ -29,7 +29,7 @@ void PTexMeshDrawable::draw(const Magnum::Matrix4& transformationMatrix,
                             Magnum::SceneGraph::Camera3D& camera,
                             Shader* shader) {
   PTexMeshShader& ptexMeshShader =
-      static_cast<PTexMeshShader&>(*shader->getShaderProgram());
+      static_cast<PTexMeshShader&>(*(shader->getShaderProgram()));
   ptexMeshShader.setExposure(exposure_)
       .setGamma(gamma_)
       .setSaturation(saturation_)
