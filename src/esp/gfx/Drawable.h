@@ -28,11 +28,6 @@ class Drawable : public Magnum::SceneGraph::Drawable3D {
 
   virtual scene::SceneNode& getSceneNode() { return node_; }
 
-  Drawable& setGroup(DrawableGroup* group) {
-    group_ = group;
-    return *this;
-  }
-
  protected:
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
                     Magnum::SceneGraph::Camera3D& camera) override;
