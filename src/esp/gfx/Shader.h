@@ -65,7 +65,7 @@ enum ShaderType {
 
 struct ShaderConfig {
   std::string id = "";
-  ShaderType type = ShaderType::TEXTURED_SHADER_PHONG;
+  ShaderType type = ShaderType::TEXTURED_SHADER;
   int numLights = 1;
 };
 

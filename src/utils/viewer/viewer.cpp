@@ -168,7 +168,7 @@ Viewer::Viewer(const Arguments& arguments)
   navSceneNode_ = &rootNode_->createChild();
 
   sceneGraph_->drawableManager().createShader(
-      gfx::ShaderConfig{"physics", gfx::ShaderType::COLORED_SHADER_PHONG, 3});
+      gfx::ShaderConfig{"physics", gfx::ShaderType::COLORED_SHADER, 3});
   gfx::Shader& s = sceneGraph_->drawableManager().getShader("physics");
   sceneGraph_->drawableManager().createDrawableGroup("physics", &s);
 
