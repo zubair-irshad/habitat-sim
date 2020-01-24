@@ -33,9 +33,6 @@ void GenericDrawable::draw(const Magnum::Matrix4& transformationMatrix,
   // TODO: use polymorphism to do double dispatch here
   if (type == COLORED_SHADER_PHONG || type == VERTEX_COLORED_SHADER_PHONG ||
       type == TEXTURED_SHADER_PHONG) {
-    if (!group_->id().empty())
-      LOG(INFO) << "DRAWING PHONG";
-
     Magnum::Shaders::Phong& phongShader =
         static_cast<Magnum::Shaders::Phong&>(shaderProgram);
     phongShader.setTransformationMatrix(transformationMatrix)
@@ -53,8 +50,6 @@ void GenericDrawable::draw(const Magnum::Matrix4& transformationMatrix,
     }
 
   } else {
-    if (!group_->id().empty())
-      LOG(INFO) << "DRAWING FLAT";
     Magnum::Shaders::Flat3D& flatShader =
         static_cast<Magnum::Shaders::Flat3D&>(shaderProgram);
     flatShader.setTransformationProjectionMatrix(camera.projectionMatrix() *

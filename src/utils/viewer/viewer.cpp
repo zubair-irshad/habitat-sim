@@ -601,10 +601,11 @@ void Viewer::keyPressEvent(KeyEvent& event) {
         cfg.type = esp::gfx::TEXTURED_SHADER_PHONG;
       }
       currShader.setConfig(cfg);
-
+    } break;
+    case KeyEvent::Key::L: {
       esp::gfx::Shader& physicsShader =
           sceneGraph_->drawableManager().getShader("physics");
-      cfg = physicsShader.getConfig();
+      auto cfg = physicsShader.getConfig();
       if (cfg.type == esp::gfx::COLORED_SHADER_PHONG) {
         cfg.type = esp::gfx::COLORED_SHADER;
       } else {
