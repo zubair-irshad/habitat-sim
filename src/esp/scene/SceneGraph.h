@@ -5,7 +5,7 @@
 #pragma once
 
 #include "esp/core/esp.h"
-#include "esp/gfx/DrawableManager.h"
+#include "esp/gfx/DrawableGroup.h"
 #include "esp/gfx/magnum.h"
 
 #include "SceneNode.h"
@@ -16,12 +16,23 @@
 namespace esp {
 namespace scene {
 class SceneGraph {
+  using DrawableGroups = std::map<std::string, gfx::DrawableGroup>;
+
  public:
   SceneGraph();
   virtual ~SceneGraph() { LOG(INFO) << "Deconstructing SceneGraph"; };
 
   SceneNode& getRootNode() { return rootNode_; }
   const SceneNode& getRootNode() const { return rootNode_; }
+
+  /**
+   * @brief Get all drawable groups in this SceneGraph
+   */
+  // TODO: return nicely iterable collection instead of map?
+  DrawableGroups& getDrawables() { return drawableGroups_; }
+
+  /** @overload */
+  const DrawableGroups& getDrawables() const { return drawableGroups_; }
 
   // set the transformation, projection matrix to the default camera
   // TODO:
@@ -34,7 +45,37 @@ class SceneGraph {
    */
   static bool isRootNode(SceneNode& node);
 
-  gfx::DrawableManager& drawableManager() { return drawableManager_; }
+  // Drawable group management
+  // TODO: move this to separate class
+
+  /**
+   * @brief Gets a @ref DrawableGroup by ID
+   *
+   * @return Pointer to @ref DrawableGroup, or nullptr if shader does not exist.
+   */
+  gfx::DrawableGroup* getDrawableGroup(const std::string& id);
+
+  /** @overload */
+  const gfx::DrawableGroup* getDrawableGroup(const std::string& id) const;
+
+  /**
+   * @brief Creates a @ref DrawableGroup
+   *
+   * @param id    ID of created @ref DrawableGroup
+   * @param args  Arguments passed to @ref DrawableGroup constructor
+   * @return Pointer to the created @ref DrawableGroup, or nullptr if a
+   *  @ref DrawableGroup with the same ID already exists.
+   */
+  template <typename... DrawableGroupArgs>
+  gfx::DrawableGroup* createDrawableGroup(std::string id,
+                                          DrawableGroupArgs&&... args);
+
+  /**
+   * @brief Deletes a @ref DrawableGroup
+   *
+   * @return If the @ref Shader existed.
+   */
+  bool deleteDrawableGroup(const std::string& id);
 
  protected:
   MagnumScene world_;
@@ -62,11 +103,8 @@ class SceneGraph {
   gfx::RenderCamera defaultRenderCamera_;
 
   // ==== Drawables ====
-  // for each scene node in a scene graph,
-  // we create a drawable object (e.g., PTexMeshDrawable, InstanceMeshDrawable,
-  // etc.) and add it to the drawable group of that scene. This is done on the
-  // fly when we build the scene graph
-  gfx::DrawableManager drawableManager_;
+  //
+  DrawableGroups drawableGroups_;
 };
 }  // namespace scene
 }  // namespace esp

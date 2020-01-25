@@ -9,8 +9,7 @@
 #include <Magnum/Shaders/Phong.h>
 #include <Magnum/Shaders/Shaders.h>
 
-#include <memory>
-
+#include "esp/core/esp.h"
 #include "esp/gfx/PrimitiveIDShader.h"
 #ifdef ESP_BUILD_PTEX_SUPPORT
 #include "esp/gfx/PTexMeshShader.h"
@@ -19,12 +18,7 @@
 namespace esp {
 namespace gfx {
 
-// TODO(MM): remove all this and change into a string based factory method with
-// json configuration
-
-/**
- * @brief Enumeration of supported shader program options.
- */
+// TODO: string type to allow for dynamically added shader types
 enum ShaderType {
   /**
    * Shader program for instance mesh data. See @ref gfx::PrimitiveIDShader,
@@ -64,9 +58,8 @@ enum ShaderType {
 };
 
 struct ShaderConfig {
-  std::string id = "";
   ShaderType type = ShaderType::TEXTURED_SHADER;
-  int numLights = 1;
+  // JSON options;
 };
 
 /**
@@ -77,6 +70,7 @@ class Shader {
   explicit Shader(const ShaderConfig& config = {});
 
   const ShaderConfig& getConfig() const { return config_; }
+
   Magnum::GL::AbstractShaderProgram* getShaderProgram() {
     return shaderProgram_.get();
   }
@@ -87,6 +81,8 @@ class Shader {
   ShaderConfig config_;
 
   std::unique_ptr<Magnum::GL::AbstractShaderProgram> shaderProgram_;
+
+  ESP_SMART_POINTERS(Shader);
 };
 
 }  // namespace gfx

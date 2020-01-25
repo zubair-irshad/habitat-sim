@@ -17,10 +17,23 @@ namespace gfx {
 
 class DrawableGroupClient;
 
+/**
+ * @brief Drawable for use with @ref DrawableGroup.
+ *
+ * Drawable will retrieve its shader program from its group, and draw
+ * itself with the program.
+ */
 class Drawable : public Magnum::SceneGraph::Drawable3D {
   friend DrawableGroupClient;
 
  public:
+  /**
+   * @brief Constructor
+   *
+   * @param node Node which is now drawable.
+   * @param mesh Mesh which will be drawn when this drawable is rendered.
+   * @param group Drawable group this drawable will be added to.
+   */
   Drawable(scene::SceneNode& node,
            Magnum::GL::Mesh& mesh,
            DrawableGroup* group = nullptr);
@@ -29,11 +42,23 @@ class Drawable : public Magnum::SceneGraph::Drawable3D {
   virtual scene::SceneNode& getSceneNode() { return node_; }
 
  protected:
+  /**
+   * @brief Draw the object using given camera and group's shader
+   */
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
                     Magnum::SceneGraph::Camera3D& camera) override;
 
-  // Each derived drawable class needs to implement this draw() function. It's
-  // nothing more than setting up shader parameters and drawing the mesh.
+  /**
+   * @brief Draw the object using given camera and shader
+   *
+   * @param transformationMatrix  Transformation relative to camera.
+   * @param camera                Camera to draw from.
+   * @param shader                Shader to draw with.
+   *
+   * Each derived drawable class needs to implement this draw() function. It's
+   * nothing more than setting up shader parameters and drawing the mesh.
+   * TODO: Remove this and do shader setup inside ShaderProgram subclasses.
+   */
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
                     Magnum::SceneGraph::Camera3D& camera,
                     Shader* shader) = 0;
@@ -44,8 +69,7 @@ class Drawable : public Magnum::SceneGraph::Drawable3D {
 };
 
 /**
- * @brief Class to expose group membership to Drawable Groups (Attorney-Client
- * pattern)
+ * @brief Expose group membership to DrawableGroups (Attorney-Client pattern)
  */
 class DrawableGroupClient {
  private:

@@ -13,32 +13,56 @@ namespace gfx {
 class Drawable;
 
 /**
- * @brief Class which manages a drawable group, and related settings for that
- * drawable group
+ * @brief Group of drawables, and shared group parameters.
  */
 class DrawableGroup : public Magnum::SceneGraph::DrawableGroup3D {
  public:
-  explicit DrawableGroup(std::string id, Shader* shader = nullptr)
-      : Magnum::SceneGraph::DrawableGroup3D{},
-        id_{std::move(id)},
-        shader_{shader} {}
+  /**
+   * @brief Constructor
+   *
+   * @param shader Shader all Drawables in this group will use.
+   */
+  explicit DrawableGroup(Shader::ptr shader = nullptr)
+      : Magnum::SceneGraph::DrawableGroup3D{}, shader_{std::move(shader)} {}
 
-  const std::string& id() const { return id_; }
-
+  /**
+   * @brief Add a drawable to this group.
+   *
+   * @param drawable Drawable to add
+   * @return Reference to self (for method chaining)
+   *
+   * If the drawable is part of another group, it is removed from it.
+   */
   DrawableGroup& add(Drawable& drawable);
 
+  /**
+   * @brief Removes the drawable from this group.
+   *
+   * @param drawable Drawable to remove
+   * @return Reference to self (for method chaining)
+   *
+   * The drawable must be part of this group.
+   */
   DrawableGroup& remove(Drawable& drawable);
 
-  Shader* shader() { return shader_; }
+  /**
+   * @brief Get the shader this group is using.
+   */
+  Shader::ptr getShader() { return shader_; }
 
-  DrawableGroup& setShader(Shader* shader) {
-    shader_ = shader;
+  /**
+   * @brief Set the shader this group uses.
+   * @return Reference to self (for method chaining)
+   */
+  DrawableGroup& setShader(Shader::ptr shader) {
+    shader_ = std::move(shader);
     return *this;
   }
 
  private:
-  const std::string id_;
-  Shader* shader_;
+  Shader::ptr shader_ = nullptr;
+
+  ESP_SMART_POINTERS(DrawableGroup);
 };
 
 }  // namespace gfx

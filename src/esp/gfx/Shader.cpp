@@ -7,6 +7,8 @@
 namespace esp {
 namespace gfx {
 
+namespace {
+// TODO: don't hardcode this
 std::unique_ptr<Magnum::GL::AbstractShaderProgram> shaderProgramFactory(
     const ShaderConfig& cfg) {
   std::unique_ptr<Magnum::GL::AbstractShaderProgram> shaderProgram;
@@ -78,17 +80,15 @@ std::unique_ptr<Magnum::GL::AbstractShaderProgram> shaderProgramFactory(
   }
   return shaderProgram;
 }
+}  // namespace
 
 Shader::Shader(const ShaderConfig& config)
     : config_{config}, shaderProgram_{shaderProgramFactory(config)} {}
 
 void Shader::setConfig(const ShaderConfig& config) {
-  if (config.id != config_.id) {
-    // TODO: I don't like this, have better logic here...
-    throw std::exception();
-  }
   config_ = config;
-  // MAKE SURE WE UPDATE PROGRAM WITH NEW CONFIG
+  // update program now that we have a new config
+  // TODO: error check if config is invalid
   shaderProgram_ = shaderProgramFactory(config);
 }
 

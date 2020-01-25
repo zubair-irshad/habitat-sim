@@ -45,10 +45,7 @@ class PhysicsManagerTest : public testing::Test {
     auto& sceneGraph = sceneManager_.getSceneGraph(sceneID_);
     esp::scene::SceneNode* navSceneNode =
         &sceneGraph.getRootNode().createChild();
-    auto& drawables = sceneManager_.getSceneGraph(sceneID_)
-                          .drawableManager()
-                          .getDrawableGroup();
-    resourceManager_.loadScene(info, physicsManager_, navSceneNode, &drawables,
+    resourceManager_.loadScene(info, physicsManager_, navSceneNode, &sceneGraph,
                                physicsConfigFile);
   }
 

@@ -167,12 +167,6 @@ Viewer::Viewer(const Arguments& arguments)
   rootNode_ = &sceneGraph_->getRootNode();
   navSceneNode_ = &rootNode_->createChild();
 
-  sceneGraph_->drawableManager().createShader(
-      gfx::ShaderConfig{"physics", gfx::ShaderType::COLORED_SHADER, 3});
-  gfx::Shader& s = sceneGraph_->drawableManager().getShader("physics");
-  sceneGraph_->drawableManager().createDrawableGroup("physics", &s);
-
-  auto& drawables = sceneGraph_->drawableManager().getDrawableGroup();
   const std::string& file = args.value("scene");
   const assets::AssetInfo info = assets::AssetInfo::fromPath(file);
 
@@ -184,14 +178,14 @@ Viewer::Viewer(const Arguments& arguments)
           << " was not found, specify an existing file in --physics-config";
     }
     if (!resourceManager_.loadScene(info, physicsManager_, navSceneNode_,
-                                    &drawables, physicsConfigFilename)) {
+                                    &sceneGraph_, physicsConfigFilename)) {
       LOG(FATAL) << "cannot load " << file;
     }
     if (args.isSet("debug-bullet")) {
       debugBullet_ = true;
     }
   } else {
-    if (!resourceManager_.loadScene(info, navSceneNode_, &drawables)) {
+    if (!resourceManager_.loadScene(info, navSceneNode_, &sceneGraph_)) {
       LOG(FATAL) << "cannot load " << file;
     }
   }
@@ -270,11 +264,7 @@ void Viewer::addObject(std::string configFile) {
           ->MagnumObject::transformationMatrix();  // Relative to agent bodynode
   Vector3 new_pos = T.transformPoint({0.1f, 2.5f, -2.0f});
 
-  auto& drawables = sceneGraph_->drawableManager().getDrawableGroup("physics");
-  LOG(INFO) << "adding object using shader: "
-            << drawables.shader()->getConfig().type;
-
-  int physObjectID = physicsManager_->addObject(configFile, &drawables);
+  int physObjectID = physicsManager_->addObject(configFile, &sceneGraph_);
   physicsManager_->setTranslation(physObjectID, new_pos);
 
   // draw random quaternion via the method:
@@ -404,7 +394,7 @@ void Viewer::drawEvent() {
   int DEFAULT_SCENE = 0;
   int sceneID = sceneID_[DEFAULT_SCENE];
   auto& sceneGraph = sceneManager_.getSceneGraph(sceneID);
-  for (auto& idAndDrawableGroup : sceneGraph.drawableManager().getDrawables()) {
+  for (auto& idAndDrawableGroup : sceneGraph.getDrawables()) {
     renderCamera_->draw(idAndDrawableGroup.second);
   }
 
@@ -592,26 +582,7 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       break;
     case KeyEvent::Key::T: {
       // Test key. Put what you want here...
-      // torqueLastObject();
-      esp::gfx::Shader& currShader = sceneGraph_->drawableManager().getShader();
-      auto cfg = currShader.getConfig();
-      if (cfg.type == esp::gfx::TEXTURED_SHADER_PHONG) {
-        cfg.type = esp::gfx::TEXTURED_SHADER;
-      } else {
-        cfg.type = esp::gfx::TEXTURED_SHADER_PHONG;
-      }
-      currShader.setConfig(cfg);
-    } break;
-    case KeyEvent::Key::L: {
-      esp::gfx::Shader& physicsShader =
-          sceneGraph_->drawableManager().getShader("physics");
-      auto cfg = physicsShader.getConfig();
-      if (cfg.type == esp::gfx::COLORED_SHADER_PHONG) {
-        cfg.type = esp::gfx::COLORED_SHADER;
-      } else {
-        cfg.type = esp::gfx::COLORED_SHADER_PHONG;
-      }
-      physicsShader.setConfig(cfg);
+      torqueLastObject();
     } break;
     case KeyEvent::Key::I:
       Magnum::DebugTools::screenshot(GL::defaultFramebuffer,
@@ -621,9 +592,7 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       // toggle bounding box on objects
       drawObjectBBs = !drawObjectBBs;
       for (auto id : physicsManager_->getExistingObjectIDs()) {
-        physicsManager_->setObjectBBDraw(
-            id, &sceneGraph_->drawableManager().getDrawableGroup(),
-            drawObjectBBs);
+        physicsManager_->setObjectBBDraw(id, &sceneGraph_, drawObjectBBs);
       }
     } break;
     default:

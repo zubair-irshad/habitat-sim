@@ -16,6 +16,9 @@ DrawableGroup& DrawableGroup::add(esp::gfx::Drawable& drawable) {
 }
 
 DrawableGroup& DrawableGroup::remove(esp::gfx::Drawable& drawable) {
+  CORRADE_ASSERT(DrawableGroupClient::getGroup(drawable) == this,
+                 "DrawableGroup::remove: drawable is not part of this group",
+                 *this);
   Magnum::SceneGraph::DrawableGroup3D::remove(drawable);
   DrawableGroupClient::setGroup(drawable, nullptr);
   return *this;

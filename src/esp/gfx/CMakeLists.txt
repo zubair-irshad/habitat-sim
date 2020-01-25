@@ -22,8 +22,8 @@ set(gfx_SOURCES
   DrawableGroup.cpp
   Shader.h
   Shader.cpp
-  DrawableManager.h
-  DrawableManager.cpp
+  ShaderManager.h
+  ShaderManager.cpp
 )
 
 # If ptex support is enabled add relevant source files
