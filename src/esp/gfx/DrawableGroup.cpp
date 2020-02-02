@@ -4,7 +4,6 @@
 
 #include "DrawableGroup.h"
 
-#include "esp/gfx/Drawable.h"
 #include "esp/gfx/RenderCamera.h"
 
 namespace esp {
