@@ -48,7 +48,7 @@ enum class ShaderType {
 struct ShaderConfiguration {
   ShaderType type = ShaderType::FLAT_SHADER;
   // TODO: have derived shader configurations, delete the following
-  bool textured = true;
+  bool textured = false;
   bool vertexColored = false;
 };
 
