@@ -101,6 +101,11 @@ class Shader {
     // shaderProgram_->draw(drawable, transformationMatrix, camera);
   }
 
+  // TODO: remove this once Drawables pass themselves to Shader to render
+  Magnum::GL::AbstractShaderProgram& getShaderProgram() {
+    return *shaderProgram_;
+  }
+
  private:
   ShaderConfiguration config_;
 
