@@ -19,7 +19,7 @@ void GltfMeshData::uploadBuffersToGPU(bool forceReload) {
   renderingBuffer_.reset();
   renderingBuffer_ = std::make_unique<GltfMeshData::RenderingBuffer>();
   Magnum::MeshTools::CompileFlags compileFlags{};
-  if (needsNormals_ && !meshData_->hasNormals()) {
+  if (needsNormals_ && !meshData_->hasNormals() || true) {
     compileFlags |= Magnum::MeshTools::CompileFlag::GenerateSmoothNormals;
   }
   // position, normals, uv, colors are bound to corresponding attributes

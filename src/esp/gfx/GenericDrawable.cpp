@@ -65,6 +65,18 @@ void GenericDrawable::draw(const Magnum::Matrix4& transformationMatrix,
       .setProjectionMatrix(camera.projectionMatrix())
       .setNormalMatrix(transformationMatrix.rotationScaling());
 
+  if (lightSetup_->empty()) {
+    if (materialData_->diffuseTexture) {
+      shader_->bindAmbientTexture(*(materialData_->diffuseTexture));
+      shader_->setAmbientColor(Magnum::Color4{1});
+    } else {
+      shader_->setAmbientColor(materialData_->diffuseColor);
+    }
+    mesh_.draw(*shader_);
+
+    return;
+  }
+
   if (materialData_->ambientTexture)
     shader_->bindAmbientTexture(*(materialData_->ambientTexture));
   if (materialData_->diffuseTexture)
@@ -79,9 +91,10 @@ void GenericDrawable::updateShader() {
   Magnum::UnsignedInt lightCount = lightSetup_->size();
   Magnum::Shaders::Phong::Flags flags = Magnum::Shaders::Phong::Flag::ObjectId;
 
-  if (materialData_->ambientTexture)
+  if (materialData_->ambientTexture ||
+      (lightSetup_->empty() && materialData_->diffuseTexture))
     flags |= Magnum::Shaders::Phong::Flag::AmbientTexture;
-  if (materialData_->diffuseTexture)
+  if (materialData_->diffuseTexture && !lightSetup_->empty())
     flags |= Magnum::Shaders::Phong::Flag::DiffuseTexture;
   if (materialData_->specularTexture)
     flags |= Magnum::Shaders::Phong::Flag::SpecularTexture;

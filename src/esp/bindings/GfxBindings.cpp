@@ -11,6 +11,7 @@
 #include <Magnum/Python.h>
 #include <Magnum/SceneGraph/Python.h>
 
+#include "esp/gfx/LightSetup.h"
 #include "esp/gfx/RenderCamera.h"
 #include "esp/gfx/Renderer.h"
 #include "esp/scene/SemanticScene.h"
@@ -111,6 +112,20 @@ void initGfxBindings(py::module& m) {
 #endif
       .def("render_enter", &RenderTarget::renderEnter)
       .def("render_exit", &RenderTarget::renderExit);
+
+  py::enum_<LightPositionModel>(m, "LightPositionModel")
+      .value("CAMERA", LightPositionModel::CAMERA)
+      .value("GLOBAL", LightPositionModel::GLOBAL)
+      .value("OBJECT", LightPositionModel::OBJECT);
+
+  py::class_<LightInfo>(m, "LightInfo")
+      .def(py::init())
+      .def(py::init<Magnum::Vector3, Magnum::Color4, LightPositionModel>(),
+           "position"_a, "color"_a = Magnum::Color4{1},
+           "model"_a = LightPositionModel::GLOBAL)
+      .def_readwrite("position", &LightInfo::position)
+      .def_readwrite("color", &LightInfo::color)
+      .def_readwrite("model", &LightInfo::model);
 }
 
 }  // namespace gfx

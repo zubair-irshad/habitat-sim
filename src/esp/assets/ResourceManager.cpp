@@ -981,7 +981,7 @@ bool ResourceManager::loadGeneralMeshData(
 
   // Mesh & metaData container
   MeshMetaData metaData;
-  metaData.isSceneAsset = isScene;
+  metaData.isSceneAsset = false;
 
 #ifndef MAGNUM_BUILD_STATIC
   Magnum::PluginManager::Manager<Importer> manager;
@@ -1184,6 +1184,7 @@ void ResourceManager::loadMaterials(Importer& importer,
       finalMaterial = getPhongShadedMaterialData(phongMaterialData,
                                                  metaData->textureIndex.first);
     }
+
     // for now, just use unique ID for material key. This may change if we
     // expose materials to user for post-load modification
     shaderManager_.set(std::to_string(currentMaterialID),
@@ -1256,6 +1257,8 @@ gfx::PhongMaterialData::uptr ResourceManager::getPhongShadedMaterialData(
                                        ? 0x000000_rgbf
                                        : material.specularColor();
   }
+  Magnum::Debug{} << "A: " << finalMaterial->ambientColor
+                  << " D: " << finalMaterial->diffuseColor;
   return finalMaterial;
 }
 
@@ -1444,8 +1447,8 @@ void ResourceManager::addPrimitiveToDrawables(int primitiveID,
                         DEFAULT_LIGHTING_KEY, DEFAULT_MATERIAL_KEY, drawables);
 }
 
-void ResourceManager::setLightSetup(const Mn::ResourceKey& key,
-                                    gfx::LightSetup setup) {
+void ResourceManager::setLightSetup(gfx::LightSetup setup,
+                                    const Mn::ResourceKey& key) {
   shaderManager_.set(key, std::move(setup), Mn::ResourceDataState::Mutable,
                      Mn::ResourcePolicy::Manual);
 }

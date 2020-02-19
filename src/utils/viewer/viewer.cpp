@@ -193,8 +193,16 @@ Viewer::Viewer(const Arguments& arguments)
   }
 
   const Magnum::Range3D& sceneBB = rootNode_->computeCumulativeBB();
-  resourceManager_.setLightSetup(assets::ResourceManager::DEFAULT_LIGHTING_KEY,
-                                 gfx::getLightsAtBoxCorners(sceneBB));
+  gfx::LightSetup s{{Magnum::Vector3{10.0f, 10.0f, 10.0f} * 100.0f,
+                     0xffffff_rgbf * 0.8f, gfx::LightPositionModel::CAMERA},
+                    {Magnum::Vector3{-5.0f, -5.0f, 10.0f} * 100.0f,
+                     0xffcccc_rgbf * 0.8f, gfx::LightPositionModel::CAMERA},
+                    {Magnum::Vector3{0.0f, 10.0f, -10.0f} * 100.0f,
+                     0xccccff_rgbf * 0.8f, gfx::LightPositionModel::CAMERA}};
+
+  // resourceManager_.setLightSetup(
+  //     gfx::getLightsAtBoxCorners(sceneBB, Magnum::Color4{0.25f}));
+  resourceManager_.setLightSetup(std::move(s));
 
   // Set up camera
   renderCamera_ = &sceneGraph_->getDefaultRenderCamera();
@@ -599,10 +607,18 @@ void Viewer::keyPressEvent(KeyEvent& event) {
     case KeyEvent::Key::V:
       invertGravity();
       break;
-    case KeyEvent::Key::T:
-      // Test key. Put what you want here...
-      torqueLastObject();
-      break;
+    case KeyEvent::Key::T: {
+      static bool isPhong = false;
+
+      gfx::setLightSetupForSubTree(
+          sceneGraph_->getRootNode(),
+          std::string{isPhong ? assets::ResourceManager::DEFAULT_LIGHTING_KEY
+                              : assets::ResourceManager::NO_LIGHT_KEY});
+      isPhong ^= true;
+    }
+    // Test key. Put what you want here...
+    // torqueLastObject();
+    break;
     case KeyEvent::Key::I:
       Magnum::DebugTools::screenshot(GL::defaultFramebuffer,
                                      "test_image_save.png");
