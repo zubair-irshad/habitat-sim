@@ -981,7 +981,7 @@ bool ResourceManager::loadGeneralMeshData(
 
   // Mesh & metaData container
   MeshMetaData metaData;
-  metaData.isSceneAsset = false;
+  metaData.isSceneAsset = isScene;
 
 #ifndef MAGNUM_BUILD_STATIC
   Magnum::PluginManager::Manager<Importer> manager;

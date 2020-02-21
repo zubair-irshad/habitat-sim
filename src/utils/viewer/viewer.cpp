@@ -200,9 +200,9 @@ Viewer::Viewer(const Arguments& arguments)
                     {Magnum::Vector3{0.0f, 10.0f, -10.0f} * 100.0f,
                      0xccccff_rgbf * 0.8f, gfx::LightPositionModel::CAMERA}};
 
-  // resourceManager_.setLightSetup(
-  //     gfx::getLightsAtBoxCorners(sceneBB, Magnum::Color4{0.25f}));
   resourceManager_.setLightSetup(std::move(s));
+  // resourceManager_.setLightSetup(
+  //     gfx::getLightsAtBoxCorners(sceneBB, Magnum::Color4{0.4f}));
 
   // Set up camera
   renderCamera_ = &sceneGraph_->getDefaultRenderCamera();
@@ -581,9 +581,10 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       break;
     case KeyEvent::Key::O: {
       if (physicsManager_ != nullptr) {
+        static int ind = 0;
         int numObjects = resourceManager_.getNumLibraryObjects();
         if (numObjects) {
-          int randObjectID = rand() % numObjects;
+          int randObjectID = ind++ % numObjects;
           addObject(resourceManager_.getObjectConfig(randObjectID));
 
         } else
@@ -608,17 +609,59 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       invertGravity();
       break;
     case KeyEvent::Key::T: {
-      static bool isPhong = false;
+      gfx::LightSetup s{
+          {Magnum::Vector3{10.0f, 10.0f, 10.0f} * 100.0f, 0xffffff_rgbf * 0.8f,
+           gfx::LightPositionModel::CAMERA},
+          {Magnum::Vector3{-5.0f, -5.0f, 10.0f} * 100.0f, 0xffcccc_rgbf * 0.8f,
+           gfx::LightPositionModel::CAMERA},
+          {Magnum::Vector3{0.0f, 10.0f, -10.0f} * 100.0f, 0xccccff_rgbf * 0.8f,
+           gfx::LightPositionModel::CAMERA}};
+      static bool isPhong = true;
 
-      gfx::setLightSetupForSubTree(
-          sceneGraph_->getRootNode(),
-          std::string{isPhong ? assets::ResourceManager::DEFAULT_LIGHTING_KEY
-                              : assets::ResourceManager::NO_LIGHT_KEY});
+      // gfx::setLightSetupForSubTree(
+      //     sceneGraph_->getRootNode(),
+      //     std::string{isPhong ? assets::ResourceManager::DEFAULT_LIGHTING_KEY
+      //                         : assets::ResourceManager::NO_LIGHT_KEY});
+
+      resourceManager_.setLightSetup(isPhong ? gfx::LightSetup{}
+                                             : std::move(s));
       isPhong ^= true;
     }
     // Test key. Put what you want here...
     // torqueLastObject();
     break;
+    case KeyEvent::Key::L: {
+      gfx::LightSetup s{
+          {Magnum::Vector3{10.0f, 10.0f, 10.0f} * 100.0f, 0xffcccc_rgbf * 0.8f,
+           gfx::LightPositionModel::CAMERA},
+          {Magnum::Vector3{-5.0f, -5.0f, 10.0f} * 100.0f, 0xffcccc_rgbf * 0.8f,
+           gfx::LightPositionModel::CAMERA},
+          {Magnum::Vector3{0.0f, 10.0f, -10.0f} * 100.0f, 0xffcccc_rgbf * 0.8f,
+           gfx::LightPositionModel::CAMERA}};
+      resourceManager_.setLightSetup(s, "colored_light");
+      static bool isPhong = false;
+
+      gfx::setLightSetupForSubTree(
+          physicsManager_->getObjectSceneNode(objectIDs_.back()),
+          std::string{isPhong ? assets::ResourceManager::DEFAULT_LIGHTING_KEY
+                              : "colored_light"});
+
+      // resourceManager_.setLightSetup(isPhong ? gfx::LightSetup{}
+      //                                        : std::move(s));
+      isPhong ^= true;
+      break;
+    }
+    case KeyEvent::Key::R: {
+      static int count = 0;
+      gfx::LightSetup s{
+          {Magnum::Vector3{-10.0f + (count), -10.0f + (count), -10.0f} * 10.0f,
+           0xffffff_rgbf * 0.8f}};
+
+      count = (count + 1) % 25;
+
+      resourceManager_.setLightSetup(std::move(s));
+      break;
+    }
     case KeyEvent::Key::I:
       Magnum::DebugTools::screenshot(GL::defaultFramebuffer,
                                      "test_image_save.png");

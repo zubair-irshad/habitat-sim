@@ -65,7 +65,7 @@ void GenericDrawable::draw(const Magnum::Matrix4& transformationMatrix,
       .setProjectionMatrix(camera.projectionMatrix())
       .setNormalMatrix(transformationMatrix.rotationScaling());
 
-  if (lightSetup_->empty()) {
+  if (lightSetup_->empty() && !materialData_->ambientTexture) {
     if (materialData_->diffuseTexture) {
       shader_->bindAmbientTexture(*(materialData_->diffuseTexture));
       shader_->setAmbientColor(Magnum::Color4{1});
