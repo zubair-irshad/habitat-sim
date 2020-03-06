@@ -64,6 +64,11 @@ void Simulator::reconfigure(const SimulatorConfiguration& cfg) {
     houseFilename = io::changeExtension(sceneFilename, ".scn");
   }
 
+  if (!io::exists(houseFilename)) {
+    houseFilename = Cr::Utility::Directory::join(
+        Cr::Utility::Directory::path(houseFilename), "info_semantic.json");
+  }
+
   assets::AssetInfo sceneInfo = assets::AssetInfo::fromPath(sceneFilename);
   sceneInfo.requiresLighting =
       cfg.sceneLightSetup != assets::ResourceManager::NO_LIGHT_KEY;
@@ -130,6 +135,8 @@ void Simulator::reconfigure(const SimulatorConfiguration& cfg) {
             assets::AssetInfo::fromPath(semanticMeshFilename);
         resourceManager_.loadScene(semanticSceneInfo, &semanticRootNode,
                                    &semanticDrawables);
+      } else {
+        LOG(INFO) << "Loading semantic mesh failed " << semanticMeshFilename;
       }
       LOG(INFO) << "Loaded.";
     } else {
@@ -165,6 +172,9 @@ void Simulator::reconfigure(const SimulatorConfiguration& cfg) {
           scene::SemanticScene::loadMp3dHouse(houseFilename, *semanticScene_);
         } else if (endsWith(houseFilename, ".scn")) {
           scene::SemanticScene::loadGibsonHouse(houseFilename, *semanticScene_);
+        } else if (endsWith(houseFilename, "info_semantic.json")) {
+          scene::SemanticScene::loadReplicaHouse(houseFilename,
+                                                 *semanticScene_);
         }
       }
       break;
