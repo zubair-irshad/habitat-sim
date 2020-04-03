@@ -11,7 +11,7 @@
 namespace esp {
 namespace gfx {
 
-uint64_t Drawable::drawableIDCount_ = 0;
+idType Drawable::drawableIDCount_ = 0;
 
 Drawable::Drawable(scene::SceneNode& node,
                    Magnum::GL::Mesh& mesh,

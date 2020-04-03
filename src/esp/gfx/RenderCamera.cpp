@@ -11,9 +11,6 @@
 #include <Magnum/Math/Range.h>
 #include <Magnum/SceneGraph/Drawable.h>
 
-//XXX
-#include <iostream>
-
 namespace Mn = Magnum;
 namespace Cr = Corrade;
 

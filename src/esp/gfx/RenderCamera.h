@@ -67,7 +67,7 @@ class RenderCamera : public MagnumCamera {
                     Magnum::Matrix4>>& drawableTransforms);
 
   /**
-   * @brief performs the frustum culling
+   * @brief performs the occlusion culling
    * @param drawableTransforms, a vector of pairs of Drawable3D object and its
    * absolute transformation
    * @return the number of drawables that are culled
