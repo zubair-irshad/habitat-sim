@@ -44,9 +44,13 @@ class Drawable : public Magnum::SceneGraph::Drawable3D {
    */
   DrawableGroup* drawables();
 
+  idType getDrawableID() { return drawableID_; }
+
   virtual void setLightSetup(const Magnum::ResourceKey& lightSetup){};
 
  protected:
+  static idType drawableIDCount_;
+  idType drawableID_;
   /**
    * @brief Draw the object using given camera
    *

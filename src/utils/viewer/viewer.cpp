@@ -137,6 +137,7 @@ class Viewer : public Magnum::Platform::Application {
   ImGuiIntegration::Context imgui_{NoCreate};
   bool showFPS_ = true;
   bool frustumCullingEnabled_ = true;
+  bool occlusionCullingEnabled_ = false;
 };
 
 Viewer::Viewer(const Arguments& arguments)
@@ -446,7 +447,8 @@ void Viewer::drawEvent() {
   for (auto& it : sceneGraph.getDrawableGroups()) {
     // TODO: remove || true
     if (it.second.prepareForDraw(*renderCamera_) || true) {
-      visibles += renderCamera_->draw(it.second, frustumCullingEnabled_);
+      visibles += renderCamera_->draw(it.second,
+                                      frustumCullingEnabled_, occlusionCullingEnabled_);
     }
   }
 

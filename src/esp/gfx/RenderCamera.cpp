@@ -2,6 +2,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+#include "Drawable.h"
 #include "RenderCamera.h"
 
 #include <Magnum/EigenIntegration/Integration.h>
@@ -9,6 +10,9 @@
 #include <Magnum/Math/Intersection.h>
 #include <Magnum/Math/Range.h>
 #include <Magnum/SceneGraph/Drawable.h>
+
+//XXX
+#include <iostream>
 
 namespace Mn = Magnum;
 namespace Cr = Corrade;
@@ -74,7 +78,7 @@ RenderCamera& RenderCamera::setProjectionMatrix(int width,
   return *this;
 }
 
-size_t RenderCamera::cull(
+size_t RenderCamera::frustumCull(
     std::vector<std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
                           Mn::Matrix4>>& drawableTransforms) {
   // camera frustum relative to world origin
@@ -104,28 +108,82 @@ size_t RenderCamera::cull(
         }
       });
 
-  return (newEndIter - drawableTransforms.begin());
+  return (drawableTransforms.end() - newEndIter);
+}
+
+size_t RenderCamera::occlusionCull(
+    std::vector<std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                          Mn::Matrix4>>& drawableTransforms) {
+    // partition the drawables into "OC-invisibile" and "OC-visible" based on
+    // the *last* frame;
+    // put OC-visibles in the 2nd part
+    std::vector<std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                          Mn::Matrix4>>::iterator firstVisibleIter =
+        std::partition(
+            drawableTransforms.begin(), drawableTransforms.end(),
+            [&](const std::pair<
+                std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                Mn::Matrix4>& a) {
+              Drawable& d = static_cast<Drawable&>(a.first.get());
+              return (ocVisible_.find(d.getDrawableID()) == ocVisible_.end());
+            });
+
+    // render FC-visibile and OC-visible (last frame) drawables
+    for (auto iter = firstVisibleIter; iter != drawableTransforms.end();
+         ++iter) {
+      (*iter).first.get().draw((*iter).second, *this);
+    }
+    // after rendering, remove them
+    drawableTransforms.erase(firstVisibleIter, drawableTransforms.end());
+
+    // for any FC-visible, but not OC-visible (last frame) drawables, do OC using bbox
+    // against the current z-buffer
+    for (auto iter = drawableTransforms.begin(); iter != drawableTransforms.end(); ++iter) {
+
+    }
+    
+    // render the drawables that are OC-visible in
+    // current frame (passed the previous OC test)
+
+  // This is wrong!! XXXX MUST change !!! ===
+  return 0;
 }
 
 uint32_t RenderCamera::draw(MagnumDrawableGroup& drawables,
-                            bool frustumCulling) {
-  if (!frustumCulling) {
+                            bool frustumCulling,
+                            bool occlusionCulling) {
+  if (!frustumCulling && !occlusionCulling) {
     MagnumCamera::draw(drawables);
     return drawables.size();
   }
 
+  // compute the model matices
   std::vector<std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
                         Mn::Matrix4>>
       drawableTransforms = drawableTransformations(drawables);
 
-  // draw just the visible part
-  size_t numVisibles = cull(drawableTransforms);
-  // erase all items that did not pass the frustum visibility test
-  drawableTransforms.erase(drawableTransforms.begin() + numVisibles,
-                           drawableTransforms.end());
+  // do frustum culling
+  size_t numTotalCulled = 0;
+  if (frustumCulling) {
+    size_t numCulled = frustumCull(drawableTransforms);
+    // erase all items, which are outside of the frustum
+    drawableTransforms.erase(drawableTransforms.end() - numCulled,
+                             drawableTransforms.end());
+    numTotalCulled += numCulled;
+  }
+
+  // do occlusion culling
+  if (occlusionCulling) {
+    size_t numCulled = occlusionCull(drawableTransforms);
+    // erase all items, which are occluded
+    drawableTransforms.erase(drawableTransforms.end() - numCulled,
+                             drawableTransforms.end());
+    numTotalCulled += numCulled;
+  }
 
   MagnumCamera::draw(drawableTransforms);
-  return drawableTransforms.size();
+
+  return drawables.size() - numTotalCulled;
 }
 
 }  // namespace gfx

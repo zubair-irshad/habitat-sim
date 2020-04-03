@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 #pragma once
-
+#include <unordered_set>
 #include "magnum.h"
 
 #include "esp/core/esp.h"
@@ -47,22 +47,43 @@ class RenderCamera : public MagnumCamera {
    * @param frustumCulling, whether do frustum culling or not, default: false
    * @return the number of drawables that are drawn
    */
-  uint32_t draw(MagnumDrawableGroup& drawables, bool frustumCulling = false);
+  uint32_t draw(MagnumDrawableGroup& drawables,
+                bool frustumCulling = false,
+                bool occlusionCulling = false);
   /**
    * @brief performs the frustum culling
    * @param drawableTransforms, a vector of pairs of Drawable3D object and its
    * absolute transformation
-   * @return the number of drawables that are not culled
+   * @return the number of drawables that are culled
    *
-   * NOTE: user are not encouraged to call this function directly.
-   * The preferred way is to enable the frustum culling by calling @ref
-   * setFrustumCullingEnabled and then call @ref draw
+   * NOTE: 
+   * helper function, user are not encouraged to call this function
+   * directly.
+   * expose it as a public function for testing purpose
    */
-  size_t cull(std::vector<
-              std::pair<std::reference_wrapper<Magnum::SceneGraph::Drawable3D>,
-                        Magnum::Matrix4>>& drawableTransforms);
+  size_t frustumCull(
+      std::vector<
+          std::pair<std::reference_wrapper<Magnum::SceneGraph::Drawable3D>,
+                    Magnum::Matrix4>>& drawableTransforms);
+
+  /**
+   * @brief performs the frustum culling
+   * @param drawableTransforms, a vector of pairs of Drawable3D object and its
+   * absolute transformation
+   * @return the number of drawables that are culled
+   *
+   * NOTE: 
+   * helper function, user are not encouraged to call this function
+   * directly.
+   * expose it as a public function for testing purpose
+   */
+  size_t occlusionCull(
+      std::vector<
+          std::pair<std::reference_wrapper<Magnum::SceneGraph::Drawable3D>,
+                    Magnum::Matrix4>>& drawableTransforms);
 
  protected:
+  std::unordered_set<idType> ocVisible_;
   ESP_SMART_POINTERS(RenderCamera)
 };
 
