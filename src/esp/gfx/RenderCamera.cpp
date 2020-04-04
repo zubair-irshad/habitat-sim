@@ -112,7 +112,10 @@ size_t RenderCamera::frustumCull(
         }
       });
 
-  return (drawableTransforms.end() - newEndIter);
+  int numCulled = drawableTransforms.end() - newEndIter;
+  // erase all items, which are outside of the frustum
+  drawableTransforms.erase(newEndIter, drawableTransforms.end());
+  return numCulled;
 }
 
 size_t RenderCamera::occlusionCull(
@@ -255,18 +258,12 @@ uint32_t RenderCamera::draw(MagnumDrawableGroup& drawables,
   size_t numTotalCulled = 0;
   if (frustumCulling) {
     size_t numCulled = frustumCull(drawableTransforms);
-    // erase all items, which are outside of the frustum
-    drawableTransforms.erase(drawableTransforms.end() - numCulled,
-                             drawableTransforms.end());
     numTotalCulled += numCulled;
   }
 
   // do occlusion culling
   if (occlusionCulling) {
     size_t numCulled = occlusionCull(drawableTransforms);
-    // erase all items, which are occluded
-    drawableTransforms.erase(drawableTransforms.end() - numCulled,
-                             drawableTransforms.end());
     numTotalCulled += numCulled;
   }
 
