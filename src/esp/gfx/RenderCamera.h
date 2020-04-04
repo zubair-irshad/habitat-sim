@@ -56,7 +56,7 @@ class RenderCamera : public MagnumCamera {
    * absolute transformation
    * @return the number of drawables that are culled
    *
-   * NOTE: 
+   * NOTE:
    * helper function, user are not encouraged to call this function
    * directly.
    * expose it as a public function for testing purpose
@@ -72,7 +72,7 @@ class RenderCamera : public MagnumCamera {
    * absolute transformation
    * @return the number of drawables that are culled
    *
-   * NOTE: 
+   * NOTE:
    * helper function, user are not encouraged to call this function
    * directly.
    * expose it as a public function for testing purpose
@@ -83,7 +83,11 @@ class RenderCamera : public MagnumCamera {
                     Magnum::Matrix4>>& drawableTransforms);
 
  protected:
-  std::unordered_set<idType> ocVisible_;
+  // a list that contains drawables that is NOT occluded in the last frame
+  std::unordered_set<idType> ocVisibles_;
+  // the bounding box of the occludee in occlusion culling test
+  Magnum::GL::Mesh bbox_;
+
   ESP_SMART_POINTERS(RenderCamera)
 };
 

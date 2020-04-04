@@ -29,10 +29,10 @@ class GenericDrawable : public Drawable {
 
   static constexpr const char* SHADER_KEY_TEMPLATE = "Phong-lights={}-flags={}";
 
- protected:
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
                     Magnum::SceneGraph::Camera3D& camera) override;
 
+ protected:
   void updateShader();
 
   Magnum::ResourceKey getShaderKey(Magnum::UnsignedInt lightCount,

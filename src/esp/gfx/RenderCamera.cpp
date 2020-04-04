@@ -2,14 +2,19 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-#include "Drawable.h"
 #include "RenderCamera.h"
+#include "Drawable.h"
 
 #include <Magnum/EigenIntegration/Integration.h>
+#include <Magnum/GL/Renderer.h>
+#include <Magnum/GL/SampleQuery.h>
 #include <Magnum/Math/Frustum.h>
 #include <Magnum/Math/Intersection.h>
 #include <Magnum/Math/Range.h>
+#include <Magnum/MeshTools/Compile.h>
+#include <Magnum/Primitives/Cube.h>
 #include <Magnum/SceneGraph/Drawable.h>
+#include <Magnum/Trade/MeshData.h>
 
 namespace Mn = Magnum;
 namespace Cr = Corrade;
@@ -50,6 +55,9 @@ Cr::Containers::Optional<int> rangeFrustum(const Mn::Range3D& range,
 RenderCamera::RenderCamera(scene::SceneNode& node) : MagnumCamera{node} {
   node.setType(scene::SceneNodeType::CAMERA);
   setAspectRatioPolicy(Mn::SceneGraph::AspectRatioPolicy::NotPreserved);
+
+  Mn::Trade::MeshData cube = Mn::Primitives::cubeSolidStrip();
+  bbox_ = Mn::MeshTools::compile(cube);
 }
 
 RenderCamera::RenderCamera(scene::SceneNode& node,
@@ -88,8 +96,7 @@ size_t RenderCamera::frustumCull(
                           Mn::Matrix4>& a) {
         // obtain the absolute aabb
         auto& node = static_cast<scene::SceneNode&>(a.first.get().object());
-        Corrade::Containers::Optional<Mn::Range3D> aabb =
-            node.getAbsoluteAABB();
+        Cr::Containers::Optional<Mn::Range3D> aabb = node.getAbsoluteAABB();
         if (aabb) {
           // if it has an absolute aabb, it is a static mesh
           Cr::Containers::Optional<int> culledPlane =
@@ -111,39 +118,124 @@ size_t RenderCamera::frustumCull(
 size_t RenderCamera::occlusionCull(
     std::vector<std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
                           Mn::Matrix4>>& drawableTransforms) {
-    // partition the drawables into "OC-invisibile" and "OC-visible" based on
-    // the *last* frame;
-    // put OC-visibles in the 2nd part
-    std::vector<std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
-                          Mn::Matrix4>>::iterator firstVisibleIter =
-        std::partition(
-            drawableTransforms.begin(), drawableTransforms.end(),
-            [&](const std::pair<
-                std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
-                Mn::Matrix4>& a) {
-              Drawable& d = static_cast<Drawable&>(a.first.get());
-              return (ocVisible_.find(d.getDrawableID()) == ocVisible_.end());
-            });
+  // if a node does not have absolute aabb, skip the OC test
+  // put them in the 1st half
+  auto ocBegin = std::partition(
+      drawableTransforms.begin(), drawableTransforms.end(),
+      [&](const std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                          Mn::Matrix4>& a) {
+        auto& node = static_cast<scene::SceneNode&>(a.first.get().object());
+        Cr::Containers::Optional<Mn::Range3D> aabb = node.getAbsoluteAABB();
 
-    // render FC-visibile and OC-visible (last frame) drawables
+        return (!aabb);
+      });
+
+  // from now, we only focus on range between [ocBegin,
+  // drawableTransforms.end()]
+
+  // further partition the drawables into "OC-invisibile" and "OC-visible" based
+  // on the *last* frame; put the visibles in the 2nd part
+  std::vector<std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                        Mn::Matrix4>>::iterator firstVisibleIter =
+      std::partition(
+          ocBegin, drawableTransforms.end(),
+          [&](const std::pair<
+              std::reference_wrapper<Mn::SceneGraph::Drawable3D>, Mn::Matrix4>&
+                  a) {
+            Drawable& d = static_cast<Drawable&>(a.first.get());
+            return (ocVisibles_.find(d.getDrawableID()) == ocVisibles_.end());
+          });
+
+  // once the partition is finished, clear the list, making it ready for current
+  // frame
+  ocVisibles_.clear();
+
+  // render OC-visibles in the last frame
+  for (auto iter = firstVisibleIter; iter != drawableTransforms.end(); ++iter) {
+    Drawable& d = static_cast<Drawable&>(iter->first.get());
+    d.draw(iter->second, *this);
+  }
+
+  auto testDraw =
+      [&](const std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                          Mn::Matrix4>& a) {
+        auto& node = static_cast<scene::SceneNode&>(a.first.get().object());
+        Cr::Containers::Optional<Mn::Range3D> aabb = node.getAbsoluteAABB();
+
+        Mn::Vector3 t = (*aabb).center();
+        Mn::Vector3 scale = (*aabb).size() / 2.0;
+        Mn::Matrix4 mvp = a.second * Mn::Matrix4::translation(t) *
+                          Mn::Matrix4::scaling(scale);
+
+        // render the bounding box
+        // XXX I need a shader
+      };
+
+  // turn off the rasterizer
+  Mn::GL::Renderer::enable(Mn::GL::Renderer::Feature::RasterizerDiscard);
+
+  // to update the OC visibility list, run the OC tests again even we already
+  // rendered them
+  {
+    Mn::GL::SampleQuery q{Mn::GL::SampleQuery::Target::AnySamplesPassed};
     for (auto iter = firstVisibleIter; iter != drawableTransforms.end();
          ++iter) {
-      (*iter).first.get().draw((*iter).second, *this);
+      q.begin();
+      testDraw(*iter);
+      q.end();
+      if (q.result<bool>()) {
+        Drawable& d = static_cast<Drawable&>(iter->first.get());
+        ocVisibles_.insert(d.getDrawableID());
+      }
     }
-    // after rendering, remove them
-    drawableTransforms.erase(firstVisibleIter, drawableTransforms.end());
+  }
 
-    // for any FC-visible, but not OC-visible (last frame) drawables, do OC using bbox
-    // against the current z-buffer
-    for (auto iter = drawableTransforms.begin(); iter != drawableTransforms.end(); ++iter) {
+  // remove these OC-visibles that are already rendered and oc-tested
+  drawableTransforms.erase(firstVisibleIter, drawableTransforms.end());
 
+  // for any FC-visible, but not OC-visible (last frame) drawables, do OC using
+  // bbox against the current z-buffer
+  std::vector<Mn::GL::SampleQuery> boxQuery;
+
+  for (auto iter = ocBegin; iter != drawableTransforms.end(); ++iter) {
+    // TODO: add a corrade assertion, it must have an absAABB
+    boxQuery.emplace_back(Mn::GL::SampleQuery::Target::AnySamplesPassed);
+    int idx = boxQuery.size() - 1;
+    boxQuery[idx].begin();
+    testDraw(*iter);
+    boxQuery[idx].end();
+  }
+  // now, turn on the rasterizer again
+  Mn::GL::Renderer::disable(Mn::GL::Renderer::Feature::RasterizerDiscard);
+
+  // render the drawables that are OC-visible in
+  // current frame (passed the previous OC test)
+  int idx = 0;
+  for (auto iter = ocBegin; iter != drawableTransforms.end(); ++iter, ++idx) {
+    boxQuery[idx].beginConditionalRender(
+        Mn::GL::SampleQuery::ConditionalRenderMode::Wait);
+    Drawable& d = static_cast<Drawable&>(iter->first.get());
+    d.draw(iter->second, *this);
+    boxQuery[idx].endConditionalRender();
+  }
+
+  // number of objects that were culled in current frame
+  int numCulled = 0;
+  // update the visibility list
+  idx = 0;
+  for (auto iter = ocBegin; iter != drawableTransforms.end(); ++iter, ++idx) {
+    if (boxQuery[idx].result<bool>()) {
+      Drawable& d = static_cast<Drawable&>(iter->first.get());
+      ocVisibles_.insert(d.getDrawableID());
+    } else {
+      numCulled++;  // it has been culled
     }
-    
-    // render the drawables that are OC-visible in
-    // current frame (passed the previous OC test)
+  }
 
-  // This is wrong!! XXXX MUST change !!! ===
-  return 0;
+  // last, remove all the processed drawables
+  drawableTransforms.erase(ocBegin, drawableTransforms.end());
+
+  return numCulled;
 }
 
 uint32_t RenderCamera::draw(MagnumDrawableGroup& drawables,
@@ -178,6 +270,7 @@ uint32_t RenderCamera::draw(MagnumDrawableGroup& drawables,
     numTotalCulled += numCulled;
   }
 
+  // draw anything that remains in the queue
   MagnumCamera::draw(drawableTransforms);
 
   return drawables.size() - numTotalCulled;

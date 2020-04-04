@@ -25,10 +25,10 @@ class PrimitiveIDDrawable : public Drawable {
 
   static constexpr char SHADER_KEY[] = "PrimitiveIDShader";
 
- protected:
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
                     Magnum::SceneGraph::Camera3D& camera) override;
 
+ protected:
   PrimitiveIDShader* shader_ = nullptr;
 };
 

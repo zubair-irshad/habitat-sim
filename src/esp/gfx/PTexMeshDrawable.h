@@ -25,10 +25,10 @@ class PTexMeshDrawable : public Drawable {
 
   static constexpr char SHADER_KEY[] = "PTexMeshShader";
 
- protected:
   virtual void draw(const Magnum::Matrix4& transformationMatrix,
                     Magnum::SceneGraph::Camera3D& camera) override;
 
+ protected:
   Magnum::GL::Texture2D& atlasTexture_;
 #ifndef CORRADE_TARGET_APPLE
   Magnum::GL::BufferTexture& adjFacesBufferTexture_;
