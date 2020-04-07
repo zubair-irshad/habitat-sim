@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include "magnum.h"
 
+#include <Magnum/Shaders/Flat.h>
 #include "esp/core/esp.h"
 #include "esp/scene/SceneNode.h"
 
@@ -87,6 +88,7 @@ class RenderCamera : public MagnumCamera {
   std::unordered_set<idType> ocVisibles_;
   // the bounding box of the occludee in occlusion culling test
   Magnum::GL::Mesh bbox_;
+  Magnum::Shaders::Flat3D shader_;
 
   ESP_SMART_POINTERS(RenderCamera)
 };

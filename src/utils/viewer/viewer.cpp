@@ -447,8 +447,8 @@ void Viewer::drawEvent() {
   for (auto& it : sceneGraph.getDrawableGroups()) {
     // TODO: remove || true
     if (it.second.prepareForDraw(*renderCamera_) || true) {
-      visibles += renderCamera_->draw(it.second,
-                                      frustumCullingEnabled_, occlusionCullingEnabled_);
+      visibles += renderCamera_->draw(it.second, frustumCullingEnabled_,
+                                      occlusionCullingEnabled_);
     }
   }
 
@@ -615,7 +615,8 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       agentMoved = true;
       break;
     case KeyEvent::Key::E:
-      frustumCullingEnabled_ ^= true;
+      // frustumCullingEnabled_ ^= true;
+      occlusionCullingEnabled_ ^= true;
       break;
     case KeyEvent::Key::C:
       showFPS_ = !showFPS_;

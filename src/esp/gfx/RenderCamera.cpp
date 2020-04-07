@@ -8,6 +8,7 @@
 #include <Magnum/EigenIntegration/Integration.h>
 #include <Magnum/GL/Renderer.h>
 #include <Magnum/GL/SampleQuery.h>
+#include <Magnum/Math/Color.h>
 #include <Magnum/Math/Frustum.h>
 #include <Magnum/Math/Intersection.h>
 #include <Magnum/Math/Range.h>
@@ -137,7 +138,7 @@ size_t RenderCamera::occlusionCull(
   // drawableTransforms.end()]
 
   // further partition the drawables into "OC-invisibile" and "OC-visible" based
-  // on the *last* frame; put the visibles in the 2nd part
+  // on the *last* frame; put the OC-visibles in the 2nd part
   std::vector<std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
                         Mn::Matrix4>>::iterator firstVisibleIter =
       std::partition(
@@ -149,15 +150,14 @@ size_t RenderCamera::occlusionCull(
             return (ocVisibles_.find(d.getDrawableID()) == ocVisibles_.end());
           });
 
-  // once the partition is finished, clear the list, making it ready for current
-  // frame
-  ocVisibles_.clear();
-
   // render OC-visibles in the last frame
   for (auto iter = firstVisibleIter; iter != drawableTransforms.end(); ++iter) {
     Drawable& d = static_cast<Drawable&>(iter->first.get());
     d.draw(iter->second, *this);
   }
+  // LOG(INFO) << "step 1: Last total: " << drawableTransforms.end() -
+  // drawableTransforms.begin()
+  //  << "#Last oc-visibles: " << drawableTransforms.end() - firstVisibleIter;
 
   auto testDraw =
       [&](const std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
@@ -170,12 +170,24 @@ size_t RenderCamera::occlusionCull(
         Mn::Matrix4 mvp = a.second * Mn::Matrix4::translation(t) *
                           Mn::Matrix4::scaling(scale);
 
+        using namespace Mn::Math::Literals;
         // render the bounding box
-        // XXX I need a shader
+        shader_.setColor(0x2f83cc_rgbf)
+            .setTransformationProjectionMatrix(projectionMatrix() * mvp)
+            .draw(bbox_);
       };
 
   // turn off the rasterizer
-  Mn::GL::Renderer::enable(Mn::GL::Renderer::Feature::RasterizerDiscard);
+  // Mn::GL::Renderer::enable(Mn::GL::Renderer::Feature::RasterizerDiscard);
+  /*
+  glDepthMask(GL_FALSE);
+  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+  // start occlusion queries and render for the current slice
+  glDisable(GL_CULL_FACE);
+  */
+
+  // clear the list, making it ready for the current frame
+  ocVisibles_.clear();
 
   // to update the OC visibility list, run the OC tests again even we already
   // rendered them
@@ -192,6 +204,8 @@ size_t RenderCamera::occlusionCull(
       }
     }
   }
+  // LOG(INFO) << "step 2: last ocVisibles, also ocVisibles this frame: "<<
+  // ocVisibles_.size();
 
   // remove these OC-visibles that are already rendered and oc-tested
   drawableTransforms.erase(firstVisibleIter, drawableTransforms.end());
@@ -209,7 +223,13 @@ size_t RenderCamera::occlusionCull(
     boxQuery[idx].end();
   }
   // now, turn on the rasterizer again
-  Mn::GL::Renderer::disable(Mn::GL::Renderer::Feature::RasterizerDiscard);
+  // Mn::GL::Renderer::disable(Mn::GL::Renderer::Feature::RasterizerDiscard);
+  /*
+  glDepthMask(GL_TRUE);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  // render the current slice
+  glEnable(GL_CULL_FACE);
+  */
 
   // render the drawables that are OC-visible in
   // current frame (passed the previous OC test)
@@ -217,8 +237,15 @@ size_t RenderCamera::occlusionCull(
   for (auto iter = ocBegin; iter != drawableTransforms.end(); ++iter, ++idx) {
     boxQuery[idx].beginConditionalRender(
         Mn::GL::SampleQuery::ConditionalRenderMode::Wait);
-    Drawable& d = static_cast<Drawable&>(iter->first.get());
-    d.draw(iter->second, *this);
+    // if (boxQuery[idx].result<bool>())
+    {
+      Drawable& d = static_cast<Drawable&>(iter->first.get());
+      d.draw(iter->second, *this);
+      // LOG(INFO) << "I draw something! ";
+    }
+    // else {
+    // LOG(INFO) << "NO, I did not draw anything! ";
+    // }
     boxQuery[idx].endConditionalRender();
   }
 
@@ -234,6 +261,8 @@ size_t RenderCamera::occlusionCull(
       numCulled++;  // it has been culled
     }
   }
+  // LOG(INFO) << "step 3: # Total: " << drawableTransforms.end() - ocBegin << "
+  // OC-culled: " << numCulled;
 
   // last, remove all the processed drawables
   drawableTransforms.erase(ocBegin, drawableTransforms.end());
