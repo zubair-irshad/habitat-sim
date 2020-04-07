@@ -82,12 +82,18 @@ class RenderCamera : public MagnumCamera {
       std::vector<
           std::pair<std::reference_wrapper<Magnum::SceneGraph::Drawable3D>,
                     Magnum::Matrix4>>& drawableTransforms);
+  size_t occlusionCull_slow(
+      std::vector<
+          std::pair<std::reference_wrapper<Magnum::SceneGraph::Drawable3D>,
+                    Magnum::Matrix4>>& drawableTransforms);
 
  protected:
   // a list that contains drawables that is NOT occluded in the last frame
   std::unordered_set<idType> ocVisibles_;
   // the bounding box of the occludee in occlusion culling test
   Magnum::GL::Mesh bbox_;
+  // XXX
+  Magnum::GL::Mesh bboxWire_;
   Magnum::Shaders::Flat3D shader_;
 
   ESP_SMART_POINTERS(RenderCamera)

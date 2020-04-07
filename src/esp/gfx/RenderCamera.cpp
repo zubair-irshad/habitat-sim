@@ -12,6 +12,7 @@
 #include <Magnum/Math/Frustum.h>
 #include <Magnum/Math/Intersection.h>
 #include <Magnum/Math/Range.h>
+#include <Magnum/Math/Vector.h>
 #include <Magnum/MeshTools/Compile.h>
 #include <Magnum/Primitives/Cube.h>
 #include <Magnum/SceneGraph/Drawable.h>
@@ -59,6 +60,10 @@ RenderCamera::RenderCamera(scene::SceneNode& node) : MagnumCamera{node} {
 
   Mn::Trade::MeshData cube = Mn::Primitives::cubeSolidStrip();
   bbox_ = Mn::MeshTools::compile(cube);
+
+  // XXX
+  Mn::Trade::MeshData cubeWire = Mn::Primitives::cubeWireframe();
+  bboxWire_ = Mn::MeshTools::compile(cubeWire);
 }
 
 RenderCamera::RenderCamera(scene::SceneNode& node,
@@ -136,6 +141,110 @@ size_t RenderCamera::occlusionCull(
 
   // from now, we only focus on range between [ocBegin,
   // drawableTransforms.end()]
+  // sort based on the distance to the eye in front-to-back order
+  // distance is computed using center of the absAABB to the eye (the z value in
+  // camera frame)
+
+  std::sort(
+      ocBegin, drawableTransforms.end(),
+      [&](const std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                          Mn::Matrix4>& a,
+          const std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                          Mn::Matrix4>& b) {
+        auto& nA = static_cast<scene::SceneNode&>(a.first.get().object());
+        auto& nB = static_cast<scene::SceneNode&>(b.first.get().object());
+        Cr::Containers::Optional<Mn::Range3D> boxA = nA.getAbsoluteAABB();
+        Cr::Containers::Optional<Mn::Range3D> boxB = nB.getAbsoluteAABB();
+        Mn::Vector3 cA = (*boxA).max() + (*boxA).min();
+        Mn::Vector3 cB = (*boxB).max() + (*boxB).min();
+        const auto& cam = cameraMatrix();
+        Mn::Vector3 cz{cam[2][0], cam[2][1], cam[2][2]};
+        return (Mn::Math::dot(cz, cA - cB) < 0.0);
+      });
+
+  // we divide the drawables into two groups, occluders and occludees
+  float ratio = 0.4;
+  int numOccluders = (drawableTransforms.end() - ocBegin) * ratio;
+  if (numOccluders <= 0) {
+    numOccluders = 1;
+  }
+
+  // for the occluders, draw directly
+  int counter = 0;
+  auto iter = ocBegin;
+  for (; counter < numOccluders && iter != drawableTransforms.end();
+       ++iter, ++counter) {
+    Drawable& d = static_cast<Drawable&>(iter->first.get());
+    d.draw(iter->second, *this);
+  }
+
+  // for the occludees, do OC culling
+  auto testDraw =
+      [&](const std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                          Mn::Matrix4>& a) {
+        auto& node = static_cast<scene::SceneNode&>(a.first.get().object());
+        Cr::Containers::Optional<Mn::Range3D> aabb = node.getAbsoluteAABB();
+
+        Mn::Vector3 t = (*aabb).center();
+        Mn::Vector3 scale = (*aabb).size() / 2.0;
+        Mn::Matrix4 cmvp = cameraMatrix() * Mn::Matrix4::translation(t) *
+                           Mn::Matrix4::scaling(scale);
+
+        using namespace Mn::Math::Literals;
+        // render the bounding box
+        shader_.setColor(0x2f83cc_rgbf)
+            .setTransformationProjectionMatrix(projectionMatrix() * cmvp)
+            .draw(bbox_);
+      };
+
+  // turn off the rasterizer
+  glDepthMask(GL_FALSE);
+  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+  glDisable(GL_CULL_FACE);
+
+  std::vector<Mn::GL::SampleQuery> boxQuery;
+  for (auto ocIter = iter; ocIter != drawableTransforms.end(); ++ocIter) {
+    boxQuery.emplace_back(Mn::GL::SampleQuery::Target::AnySamplesPassed);
+    int idx = boxQuery.size() - 1;
+    boxQuery[idx].begin();
+    testDraw(*ocIter);
+    boxQuery[idx].end();
+  }
+  // now, turn on the rasterizer again
+  glDepthMask(GL_TRUE);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glEnable(GL_CULL_FACE);
+
+  // render the drawables that passed the test
+  int idx = 0;
+  for (auto ocIter = iter; ocIter != drawableTransforms.end(); ++ocIter) {
+    boxQuery[idx].beginConditionalRender(
+        Mn::GL::SampleQuery::ConditionalRenderMode::Wait);
+    Drawable& d = static_cast<Drawable&>(ocIter->first.get());
+    d.draw(ocIter->second, *this);
+    boxQuery[idx].endConditionalRender();
+  }
+
+  return 0;
+}
+
+size_t RenderCamera::occlusionCull_slow(
+    std::vector<std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                          Mn::Matrix4>>& drawableTransforms) {
+  // if a node does not have absolute aabb, skip the OC test
+  // put them in the 1st half
+  auto ocBegin = std::partition(
+      drawableTransforms.begin(), drawableTransforms.end(),
+      [&](const std::pair<std::reference_wrapper<Mn::SceneGraph::Drawable3D>,
+                          Mn::Matrix4>& a) {
+        auto& node = static_cast<scene::SceneNode&>(a.first.get().object());
+        Cr::Containers::Optional<Mn::Range3D> aabb = node.getAbsoluteAABB();
+
+        return (!aabb);
+      });
+
+  // from now, we only focus on range between [ocBegin,
+  // drawableTransforms.end()]
 
   // further partition the drawables into "OC-invisibile" and "OC-visible" based
   // on the *last* frame; put the OC-visibles in the 2nd part
@@ -167,24 +276,50 @@ size_t RenderCamera::occlusionCull(
 
         Mn::Vector3 t = (*aabb).center();
         Mn::Vector3 scale = (*aabb).size() / 2.0;
+        /*
         Mn::Matrix4 mvp = a.second * Mn::Matrix4::translation(t) *
                           Mn::Matrix4::scaling(scale);
+        */
+        Mn::Matrix4 cmvp = cameraMatrix() * Mn::Matrix4::translation(t) *
+                           Mn::Matrix4::scaling(scale);
 
         using namespace Mn::Math::Literals;
         // render the bounding box
-        shader_.setColor(0x2f83cc_rgbf)
-            .setTransformationProjectionMatrix(projectionMatrix() * mvp)
+        shader_
+            .setColor(0x2f83cc_rgbf)
+            // .setTransformationProjectionMatrix(projectionMatrix() * mvp)
+            .setTransformationProjectionMatrix(projectionMatrix() * cmvp)
             .draw(bbox_);
+
+        // XXX
+        /*
+        glDepthMask(GL_TRUE);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glEnable(GL_CULL_FACE);
+
+        shader_
+            .setColor(0xff3333_rgbf)
+            // .setTransformationProjectionMatrix(projectionMatrix() * mvp)
+            .setTransformationProjectionMatrix(projectionMatrix() * cmvp)
+            .draw(bboxWire_);
+
+        // turn off the rasterizer
+        //
+        Mn::GL::Renderer::enable(Mn::GL::Renderer::Feature::RasterizerDiscard);
+
+        glDepthMask(GL_FALSE);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        // start occlusion queries and render for the current slice
+        glDisable(GL_CULL_FACE);
+        */
       };
 
   // turn off the rasterizer
   // Mn::GL::Renderer::enable(Mn::GL::Renderer::Feature::RasterizerDiscard);
-  /*
   glDepthMask(GL_FALSE);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   // start occlusion queries and render for the current slice
   glDisable(GL_CULL_FACE);
-  */
 
   // clear the list, making it ready for the current frame
   ocVisibles_.clear();
@@ -224,12 +359,9 @@ size_t RenderCamera::occlusionCull(
   }
   // now, turn on the rasterizer again
   // Mn::GL::Renderer::disable(Mn::GL::Renderer::Feature::RasterizerDiscard);
-  /*
   glDepthMask(GL_TRUE);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  // render the current slice
   glEnable(GL_CULL_FACE);
-  */
 
   // render the drawables that are OC-visible in
   // current frame (passed the previous OC test)

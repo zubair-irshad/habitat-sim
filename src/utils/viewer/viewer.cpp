@@ -471,6 +471,9 @@ void Viewer::drawEvent() {
     uint32_t total = sceneGraph.getDrawables().size();
     ImGui::Text("%u drawables", total);
     ImGui::Text("%u culled", total - visibles);
+    if (occlusionCullingEnabled_) {
+      ImGui::Text("OC culled on");
+    }
     ImGui::End();
   }
 
