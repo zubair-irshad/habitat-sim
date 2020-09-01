@@ -20,7 +20,7 @@ from habitat_sim.nav import GreedyGeodesicFollower, NavMeshSettings, PathFinder
 from habitat_sim.sensor import SensorType
 from habitat_sim.sensors.noise_models import make_sensor_noise_model
 from habitat_sim.sim import SimulatorBackend, SimulatorConfiguration
-from habitat_sim.utils.common import quat_from_angle_axis
+from habitat_sim.utils.common import quat_from_angle_axis, quat_to_magnum, quat_from_magnum
 
 torch = None
 
@@ -251,6 +251,60 @@ class Simulator(SimulatorBackend):
         collided = self._default_agent.act(action)
         self._last_state = self._default_agent.get_state()
 
+        # step physics by dt
+        step_start_Time = time.time()
+        super().step_world(dt)
+        self._previous_step_time = time.time() - step_start_Time
+
+        observations = self.get_sensor_observations()
+        # Whether or not the action taken resulted in a collision
+        observations["collided"] = collided
+
+        return observations
+
+
+    def step_cas(self, vel_control, dt=1.0 / 30.0):
+
+        agent_state = self._default_agent.state
+        self._num_total_frames += 1
+        self._last_state = self._default_agent.get_state()
+
+        previous_rigid_state = habitat_sim.RigidState(
+                    quat_to_magnum(agent_state.rotation), agent_state.position
+                )
+        # manually integrate the rigid state
+        target_rigid_state = vel_control.integrate_transform(
+            dt, previous_rigid_state
+        )
+
+        # snap rigid state to navmesh and set state to object/agent
+        # calls pathfinder.try_step or self.pathfinder.try_step_no_sliding
+        end_pos = self.step_filter(
+            previous_rigid_state.translation, target_rigid_state.translation
+        )
+
+        # set the computed state
+        agent_state.position = end_pos
+        agent_state.rotation = quat_from_magnum(
+            target_rigid_state.rotation
+        )
+        self._default_agent.set_state(agent_state)
+
+# Check if a collision occured
+        dist_moved_before_filter = (
+            target_rigid_state.translation - previous_rigid_state.translation
+        ).dot()
+        dist_moved_after_filter = (
+            end_pos - previous_rigid_state.translation
+        ).dot()
+
+        # NB: There are some cases where ||filter_end - end_pos|| > 0 when a
+        # collision _didn't_ happen. One such case is going up stairs.  Instead,
+        # we check to see if the the amount moved after the application of the filter
+        # is _less_ than the amount moved before the application of the filter
+        EPS = 0.2
+        collided = (dist_moved_after_filter + EPS) < dist_moved_before_filter
+        # print("collidded", collided)
         # step physics by dt
         step_start_Time = time.time()
         super().step_world(dt)
